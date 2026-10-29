@@ -15,7 +15,7 @@ PAGES.charts = async () => {
   const set = new URLSearchParams(location.hash.split("?")[1] || "").get("set") || "subscribers";
   const [title, charts] = CHART_SETS[set] || CHART_SETS.subscribers;
   const today = new Date().toISOString().slice(0, 10), monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-bar-chart"></i> ${title}</span></div><div class="adv-body">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-bar-chart"></i> ${title}</span></div><div class="adv-body">
     <div class="adv-row"><div class="adv-f"><label>تاريخ البدء</label><input type="date" id="cFrom" value="${monthAgo}"></div><div class="adv-f"><label>تاريخ الانتهاء</label><input type="date" id="cTo" value="${today}"></div>
       <div class="adv-f"><label>المدير</label><select id="cMgr">${options(MANAGERS, 0, "username", ME.admin.username + " ( Administrator )")}</select></div>
       <div class="adv-f"><label>اعلى</label><select id="cLim">${[1, 2, 3, 5, 10, 15, 20, 25, 30].map(n => `<option ${n === 10 ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
@@ -76,9 +76,9 @@ PAGES.profitloss = async () => {
         <div class="adv-card"><div class="adv-head"><span>ملخص الفواتير</span></div><div class="adv-body"><div class="kv"><div>فاتورة مدفوعة</div><div>${paidN}</div><div>فاتورة غير مدفوعة</div><div>${unpaidN} — ${fmt(unpaidSum)} EGP</div></div></div></div></div>
       <div class="adv-card"><div class="adv-head"><span>الإيرادات اليومية</span></div><div class="adv-body"><div class="daily">${days.map(([d, v]) => `<div class="dcol" title="${d}: ${fmt(v)}"><div class="dbar" style="height:${v * 100 / maxD}%"></div><span>${d.slice(5)}</span></div>`).join("") || '<div class="empty">لا توجد بيانات</div>'}</div></div></div>`;
   };
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-line-chart"></i> تقرير الأرباح والخسائر</span></div><div class="adv-body">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-line-chart"></i> تقرير الأرباح والخسائر</span></div><div class="adv-body">
     <h3 class="form-section">الفترة الزمنية</h3><div class="adv-actions" style="margin-bottom:14px">${Object.entries(PERIODS).map(([k, [t]]) => `<button class="${k === cur ? "btn-lblue" : "btn-plain"}" data-p="${k}">${t}</button>`).join("")}<button class="btn-plain" onclick="print()">طباعة التقرير</button></div>
-    <div id="plOut"><div class="empty"><i class="fa fa-spinner fa-spin"></i></div></div></div></div>`);
+    <div id="plOut"><div class="empty"><i class="bi bi-arrow-repeat bi-spin"></i></div></div></div></div>`);
   document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { cur = b.dataset.p; document.querySelectorAll("[data-p]").forEach(x => x.className = x.dataset.p === cur ? "btn-lblue" : "btn-plain"); render(); });
   render();
 };

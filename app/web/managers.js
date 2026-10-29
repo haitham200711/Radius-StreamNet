@@ -5,21 +5,21 @@ PAGES.managers = async () => {
   const list = MANAGERS.filter(m => m.username !== "admin").sort((a, b) => a.username.localeCompare(b.username)); // ADV lists sub-managers A→Z, not the root admin
   const sel = new Set();
   let size = 25, page = 1, q = "";
-  const dd = (id, label, items, cls = "btn-chambray") => `<span class="dd"><button class="${cls}" data-dd="${id}">${label} <i class="fa fa-caret-down"></i></button>
+  const dd = (id, label, items, cls = "btn-chambray") => `<span class="dd"><button class="${cls}" data-dd="${id}">${label} <i class="bi bi-caret-down"></i></button>
     <div class="dd-menu" id="${id}">${items.map(([k, t]) => `<a data-mact="${k}" class="${k === "soon" ? "soon" : ""}">${t}</a>`).join("")}</div></span>`;
   C(`<div class="adv-card">
-    <div class="adv-head"><span><i class="fa fa-university"></i> قائمة المدراء</span><button class="icon-btn" id="reload"><i class="fa fa-refresh"></i></button></div>
+    <div class="adv-head"><span><i class="bi bi-university"></i> قائمة المدراء</span><button class="icon-btn" id="reload"><i class="bi bi-arrow-repeat"></i></button></div>
     <div class="adv-body">
       <div class="adv-actions" style="margin:0 0 12px">
-        <button class="btn-hoki" data-mact="add"><i class="fa fa-plus"></i> إضافة</button>
-        <button class="btn-blue2" data-mact="edit"><i class="fa fa-edit"></i> تعديل</button>
+        <button class="btn-hoki" data-mact="add"><i class="bi bi-plus-lg"></i> إضافة</button>
+        <button class="btn-blue2" data-mact="edit"><i class="bi bi-pencil-square"></i> تعديل</button>
         <button class="btn-hoki" data-mact="soon">إعادة تسمية</button>
         <button class="btn-hoki" data-mact="soon">تغيير الجلسة</button>
-        <button class="btn-red" data-mact="soon"><i class="fa fa-trash"></i> حذف</button>
+        <button class="btn-red" data-mact="soon"><i class="bi bi-trash3-fill"></i> حذف</button>
         <button class="btn-hoki" data-mact="soon">إرسال رسالة</button>
         <button class="btn-hoki" data-mact="ledger">°360 عرض</button>
         <button class="btn-blue2" data-mact="copy">نسخ</button>
-        <button class="btn-green2" data-mact="login"><i class="fa fa-key"></i> حساب دخول</button>
+        <button class="btn-green2" data-mact="login"><i class="bi bi-key"></i> حساب دخول</button>
         <button class="btn-chambray" data-mact="soon">النسب المضافة</button>
         ${dd("mMore", "المزيد", [["soon", "تصفير عداد الانتظار (واتساب)"], ["soon", "رفع الحظر عن جميع حالات تسجيل الدخول"], ["soon", "إلغاء حظر جميع الايبيهات المحظورة"]])}
         ${dd("mTrial", "رصيد تجريبي", [["soon", "إضافة مبلغ نقدي"], ["soon", "سحب مبلغ نقدي"]])}

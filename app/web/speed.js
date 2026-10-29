@@ -8,7 +8,7 @@ PAGES.speed = async () => {
   C(`<div class="dz">
     <div class="dz-card dz-head"><div class="dz-title"><span class="dz-bub big"><i class="bi bi-lightning-charge-fill"></i></span>
       <div><h2>التحكم في السرعات</h2><small>زوّد سرعة كل الباقات لفترة، أو كل يوم في ساعات معيّنة، وبعدها ترجع لوحدها.</small></div>
-      <span class="dz-status ${on ? "ok" : ""}" style="${on ? "" : "background:#f1f5f9;color:#475569;border:1px solid #e2e8f0"}">${on ? `<span class="dz-dot"></span> الزيادة شغالة دلوقتي (${esc(howTxt)})` : "السرعات العادية"}</span></div>
+      <span class="dz-status ${on ? "ok" : ""}" style="${on ? "" : "background:var(--bg-card-subtle);color:var(--text-muted);border:1px solid var(--border)"}">${on ? `<span class="dz-dot"></span> الزيادة شغالة دلوقتي (${esc(howTxt)})` : "السرعات العادية"}</span></div>
       <p class="muted" style="margin:10px 0 0">الوضع: <b>${esc(modeTxt)}</b>${d.mode && d.mode !== "off" ? ` — ${esc(howTxt)}` : ""}. ${d.live ? "المتصلين بياخدوا السرعة الجديدة على طول من غير ما يفصلوا." : "<b>وضع المراقبة:</b> الإعداد بيتحفظ ويتطبّق على الراديوس الجديد، بس المشتركين لسه على ADV."} ${esc(d.note)}</p>
     </div>
     <div class="dz-kpis">

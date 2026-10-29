@@ -5,14 +5,14 @@ PAGES.charge = async () => {
   let qs = {};
   if (d.mode === "shadow") { try { qs = ((await api("sync")).adv_metrics || {}).quick_stats || {}; } catch (_) {} }
   const today = d.mode === "shadow" ? qs.today_sales_total || 0 : (d.inv_subscribers || {}).today || 0;
-  const box = (cls, num, lbl, ico) => `<div class="small-box ${cls}"><div class="inner"><h3>${num}</h3><p>${lbl}</p></div><div class="icon"><i class="fa ${ico}"></i></div><a class="small-box-footer">تفاصيل أخرى <i class="fa fa-arrow-circle-left"></i></a></div>`;
+  const box = (cls, num, lbl, ico) => `<div class="small-box ${cls}"><div class="inner"><h3>${num}</h3><p>${lbl}</p></div><div class="icon"><i class="fa ${ico}"></i></div><a class="small-box-footer">تفاصيل أخرى <i class="bi bi-arrow-circle-left"></i></a></div>`;
   const TYPES = [["same", "تفعيل بنفس الباقة"], ["time", "تفعيل بالوقت"], ["card", "تفعيل بالكارت"], ["cash", "تفعيل بمبلغ نقدي"], ["quota", "إضافة كوتة من رصيد المدير"],
     ["borrow", "إضافة سلفة"], ["money", "إضافة مبلغ نقدي"], ["trx", "التفعيل برقم المعاملة"]];
   C(`<div class="row3">${box("bg-green", typeof d.balance === "number" ? fmt(d.balance) : esc(d.balance), "الرصيد", "fa-money")}${box("bg-red", "<span id=\"cDebt\">0.00</span> EGP", "الديون", "fa-minus-circle")}
       ${box("bg-blue-steel", fmt(today) + " EGP", "محصلة الفواتير اليومية", "fa-calendar")}</div>
-    <div class="adv-card"><div class="adv-head"><span><i class="fa fa-bolt"></i> لوحة الشحن</span></div><div class="adv-body">
+    <div class="adv-card"><div class="adv-head"><span><i class="bi bi-bolt"></i> لوحة الشحن</span></div><div class="adv-body">
       <div class="g12">
-        <div class="fg s4"><label>اسم المستخدم</label><div class="adv-inline"><span class="adv-cal"><i class="fa fa-search"></i></span><input id="cUser" placeholder="بحث" autocomplete="off" list="cList"></div><datalist id="cList"></datalist></div>
+        <div class="fg s4"><label>اسم المستخدم</label><div class="adv-inline"><span class="adv-cal"><i class="bi bi-search"></i></span><input id="cUser" placeholder="بحث" autocomplete="off" list="cList"></div><datalist id="cList"></datalist></div>
         <div class="fg s4"><label>الاسم</label><input id="cName" readonly></div>
         <div class="fg s4"><label>الباقة</label><input id="cProf" readonly></div>
         <div class="fg s4"><label>طريقة التفعيل</label><select id="cType">${TYPES.map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div>

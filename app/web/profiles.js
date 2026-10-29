@@ -12,15 +12,15 @@ PAGES.profiles = async () => {
   const sel = new Set();
   let size = 25, page = 1, q = "";
   C(`<div class="adv-card">
-    <div class="adv-head"><span><i class="fa fa-tags"></i> قائمة العروض</span><button class="icon-btn" id="reload"><i class="fa fa-refresh"></i></button></div>
+    <div class="adv-head"><span><i class="bi bi-tags"></i> قائمة العروض</span><button class="icon-btn" id="reload"><i class="bi bi-arrow-repeat"></i></button></div>
     <div class="adv-body">
       <div class="adv-actions" style="margin:0 0 12px">
-        <button class="btn-hoki" id="pAdd"><i class="fa fa-plus"></i> إضافة</button>
-        <button class="btn-blue2" id="pEdit"><i class="fa fa-edit"></i> تعديل</button>
-        <button class="btn-hoki" id="pCopy"><i class="fa fa-copy"></i> نسخ</button>
-        <button class="btn-red" id="pDel"><i class="fa fa-trash"></i> حذف</button>
-        <button class="btn-hoki" id="pMsg"><i class="fa fa-envelope"></i> إرسال رسالة</button>
-        <span class="dd"><button class="b-gray btn-chambray" data-dd="pMore">المزيد <i class="fa fa-caret-down"></i></button><div class="dd-menu" id="pMore">
+        <button class="btn-hoki" id="pAdd"><i class="bi bi-plus-lg"></i> إضافة</button>
+        <button class="btn-blue2" id="pEdit"><i class="bi bi-pencil-square"></i> تعديل</button>
+        <button class="btn-hoki" id="pCopy"><i class="bi bi-copy"></i> نسخ</button>
+        <button class="btn-red" id="pDel"><i class="bi bi-trash3-fill"></i> حذف</button>
+        <button class="btn-hoki" id="pMsg"><i class="bi bi-envelope"></i> إرسال رسالة</button>
+        <span class="dd"><button class="b-gray btn-chambray" data-dd="pMore">المزيد <i class="bi bi-caret-down"></i></button><div class="dd-menu" id="pMore">
           <a class="soon">تحديد فترات باندويث</a><a class="soon">تحديد محاسبة خاصة</a><a class="soon">تحديد سرعات متعددة</a></div></span>
       </div>
       <div class="adv-tools"><label>إظهار <select id="psz">${[10, 25, 50, 100, 200, 500].map(n => `<option value="${n}" ${n === size ? "selected" : ""}>${n} في الصفحة</option>`).join("")}</select> نتائج</label>
@@ -38,7 +38,7 @@ PAGES.profiles = async () => {
         const f = p.f || {}, sys = /^(END|LIMIT)$/i.test(p.name) || !+p.enabled;
         const unit = EXP_UNIT[f.exp_unit_val] || "الأيام", n = f.exp_unit || p.days;
         return `<tr><td class="c-chk"><input type="checkbox" data-p="${p.id}" ${sel.has(p.id) ? "checked" : ""}></td>
-        <td class="c-n" style="background:${sys ? "rgba(255,59,59,.88)" : "#2dd22d"}">${(page - 1) * size + i + 1}</td>
+        <td class="c-n" style="background:${sys ? "rgba(255,59,59,.88)" : "#10b981"}">${(page - 1) * size + i + 1}</td>
         <td><a class="plink" data-edit="${p.id}">${esc(p.name)}</a></td><td>${Number(p.price).toFixed(2)}</td><td>${mbps(p.down_speed)}</td><td>${mbps(p.up_speed)}</td>
         <td>${+f.type_prof === 1 || sys ? "" : `${esc(n)} ${unit}`}</td><td>${+f.profile_down_qouta ? gbTxt(f.profile_down_qouta) : "--"}</td><td>${+f.profile_up_qouta ? gbTxt(f.profile_up_qouta) : "--"}</td>
         <td>${gbTxt(p.quota_mb)}</td><td>${esc(p.pool || f.pool_name || "")}</td><td>${p.users}</td><td>${esc(next(f.qouta_expire_service))}</td>
@@ -77,7 +77,7 @@ PAGES.profile = async () => {
   const inp = (k, attrs = "") => `<input name="${k}" value="${v(k)}" ${attrs}>`;
   const svc = (k, first) => `<select name="${k}"><option value="0">${first}</option>${list.map(p => `<option value="${esc(p.adv_id || p.id)}" ${String(f[k]) === String(p.adv_id || p.id) ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>`;
   const units = (k, opts) => `<select name="${k}">${opts.map(([val, t]) => `<option value="${val}" ${String(f[k]) === val ? "selected" : ""}>${t}</option>`).join("")}</select>`;
-  C(`<div class="adv-card box-info"><div class="adv-head"><span><i class="fa fa-tag"></i> ${editing ? "تعديل العرض (" + esc(src.name) + ")" : "إضافة عرض جديد"}</span></div>
+  C(`<div class="adv-card box-info"><div class="adv-head"><span><i class="bi bi-tag"></i> ${editing ? "تعديل العرض (" + esc(src.name) + ")" : "إضافة عرض جديد"}</span></div>
     <div class="adv-body"><form id="pf">
       <h3 class="form-section">إعدادات عامة</h3><div class="g12">
         ${fg(6, "اسم العرض", inp("profile_name", "required"))}${fg(6, "السعر (EGP)", inp("price", 'type="number" step="0.01"'))}

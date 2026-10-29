@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamRADIUS NOC | UI-UX Pro Max Edition</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+    
+    :root {
+      --bg-base: #060913;
+      --bg-surface: #0c1020;
+      --bg-card: #12182c;
+      --border-subtle: #1e2642;
+      --border-accent: rgba(56, 189, 248, 0.3);
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --status-ok: #10b981;
+      --status-warn: #f59e0b;
+      --status-err: #f43f5e;
+      --status-info: #6366f1;
+    }
+
+    body {
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-base);
+      color: #e2e8f0;
+    }
+
+    .tech-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Glow Tokens */
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    .glow-rose {
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="flex flex-col antialiased selection:bg-cyan-500 selection:text-white p-3 md:p-6 space-y-6">
+
+  <!-- ========================================================================= -->
+  <!-- 1. TOP HEADER & TELEMETRY STRIP (Data-Dense Swiss Design) -->
+  <!-- ========================================================================= -->
+  <header class="bg-[#0c1020] border border-[#1e2642] rounded-2xl px-5 py-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+    <!-- Brand & Spec Badge -->
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-sky-500 to-indigo-600 p-[1px] shadow-lg shadow-cyan-500/10">
+        <div class="w-full h-full bg-[#0c1020] rounded-[11px] flex items-center justify-center text-cyan-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm md:text-base font-extrabold text-white tracking-wide">StreamRADIUS NOC</h1>
+          <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">UI/UX PRO MAX</span>
+        </div>
+        <p class="text-[11px] text-slate-400">منظومة إدارة سيرفر الـ SSTP VPN ومركز تشغيل المشتركين والـ Static IPs</p>
+      </div>
+    </div>
+
+    <!-- Active Service Indicators (Live Status Badges) -->
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <!-- SSTP Service Card -->
+      <div class="bg-[#12182c] border border-[#1e2642] px-3.5 py-1.5 rounded-xl flex items-center gap-2.5 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div class="flex flex-col">
+          <span class="text-[10px] text-slate-400">بوابة SSTP Gateway</span>
+          <bdi id="top-gateway-ip-badge" class="tech-font font-bold text-cyan-300">10.199.0.1:4444</bdi>
+        </div>
+      </div>
+
+      <!-- RADIUS Service Card -->
+      <div class="bg-[#12182c] border border-[#1e2642] px-3.5 py-1.5 rounded-xl flex items-center gap-2.5 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <div class="flex flex-col">
+          <span class="text-[10px] text-slate-400">محرك المصادقة (AAA)</span>
+          <span class="tech-font font-bold text-emerald-400">FreeRADIUS 3.0</span>
+        </div>
+      </div>
+
+      <!-- Cloud Server IP -->
+      <div class="bg-[#12182c] border border-[#1e2642] px-3.5 py-1.5 rounded-xl flex items-center gap-2.5 text-xs">
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <div class="flex flex-col">
+          <span class="text-[10px] text-slate-400">IP السيرفر العام</span>
+          <bdi class="tech-font font-bold text-white">209.38.247.201</bdi>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. NAVIGATION TABS (Bento / Modular Switcher) -->
+  <!-- ========================================================================= -->
+  <nav class="flex items-center gap-2 bg-[#0c1020] p-1.5 rounded-2xl border border-[#1e2642] w-fit" aria-label="أقسام المنظومة">
+    <button onclick="switchTab('subscribers')" id="tab-btn-subscribers" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      <span>المشتركون والمواقع والـ Static IPs</span>
+      <span id="badge-sub-count" class="bg-cyan-500/20 px-1.5 py-0.5 rounded-md text-[10px] tech-font text-cyan-200">5</span>
+    </button>
+
+    <button onclick="switchTab('gateway')" id="tab-btn-gateway" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+      </svg>
+      <span>إعدادات بوابة نفق SSTP (Gateway Control)</span>
+    </button>
+
+    <button onclick="switchTab('tracer')" id="tab-btn-tracer" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+      <span>فاحص مسار الإشارة البصري (Signal Tracer)</span>
+    </button>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- 3. TAB 1: SUBSCRIBERS + LOCATIONS + STATIC IPs -->
+  <!-- ========================================================================= -->
+  <section id="section-subscribers" class="space-y-5">
+    
+    <!-- Action Bar & Controls -->
+    <div class="bg-[#0c1020] border border-[#1e2642] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <input type="text" id="sub-search-input" onkeyup="filterSubscribers()" placeholder="بحث باسم المشترك، المكان، أو الـ Static IP..." class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition">
+        </div>
+        <!-- Location Filter Dropdown -->
+        <select id="location-filter" onchange="filterSubscribers()" class="bg-[#12182c] border border-[#1e2642] rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition">
+          <option value="ALL">جميع الأماكن والفروع</option>
+          <option value="فرع المهندسين">فرع المهندسين</option>
+          <option value="كافيه النخيل">كافيه النخيل</option>
+          <option value="سنترال الدقي">سنترال الدقي</option>
+          <option value="مكتب الإدارة">مكتب الإدارة</option>
+        </select>
+      </div>
+
+      <!-- Add Subscriber Button -->
+      <button onclick="openAddSubscriberModal()" class="bg-gradient-to-r from-cyan-600 to-sky-500 hover:from-cyan-500 hover:to-sky-400 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>إضافة مشترك جديد + مكان وStatic IP</span>
+      </button>
+    </div>
+
+    <!-- Data-Dense Subscriber & Static IP Table -->
+    <div class="bg-[#0c1020] border border-[#1e2642] rounded-2xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right border-collapse text-xs">
+          <thead>
+            <tr class="bg-[#12182c] text-slate-400 border-b border-[#1e2642]">
+              <th class="py-3.5 px-4 font-bold">اسم المشترك (Username)</th>
+              <th class="py-3.5 px-4 font-bold">اسم المكان / الفرع (Location)</th>
+              <th class="py-3.5 px-4 font-bold">Static IP داخل نفق SSTP</th>
+              <th class="py-3.5 px-4 font-bold">البروتوكول والبوابة</th>
+              <th class="py-3.5 px-4 font-bold">الباقة والسرعة</th>
+              <th class="py-3.5 px-4 font-bold">الحالة اللحظية</th>
+              <th class="py-3.5 px-4 font-bold text-center">إجراءات تشغيلية</th>
+            </tr>
+          </thead>
+          <tbody id="subscriber-tbody" class="divide-y divide-[#1e2642]/60">
+            <!-- Dynamic rows rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Table Footer / Summary -->
+      <div class="bg-[#0c1020] px-4 py-3 border-t border-[#1e2642] flex items-center justify-between text-[11px] text-slate-400">
+        <div>إجمالي المشتركين المسجلين: <bdi id="footer-total-count" class="tech-font font-bold text-cyan-300">5</bdi> مشتركين</div>
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> متصل نشط: <bdi class="tech-font font-bold text-white">1</bdi></span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> تنبيهات تشغيل: <bdi class="tech-font font-bold text-white">2</bdi></span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-400"></span> متوقف: <bdi class="tech-font font-bold text-white">2</bdi></span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 4. TAB 2: SSTP GATEWAY & TUNNEL CONTROLLER -->
+  <!-- ========================================================================= -->
+  <section id="section-gateway" class="hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Left 2 Cols: Gateway Configuration Card -->
+      <div class="lg:col-span-2 bg-[#0c1020] border border-[#1e2642] rounded-2xl p-6 space-y-6 shadow-xl">
+        <div class="border-b border-[#1e2642] pb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-extrabold text-white flex items-center gap-2">
+              <span class="text-cyan-400">⚙️</span>
+              <span>التحكم في خادم وبوابة SSTP VPN Server</span>
+            </h2>
+            <p class="text-[11px] text-slate-400 mt-1">تحديد الـ IP الداخلي للجيتواي ونطاق توزيع الـ Static IPs لأجهزة الراوتر والـ NAS</p>
+          </div>
+          <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-bold">
+            الخدمة نشطة الآن
+          </span>
+        </div>
+
+        <form onsubmit="saveGatewaySettings(event)" class="space-y-5">
+          <!-- Gateway IP & Subnet -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="gw-ip-input" class="text-xs font-bold text-slate-300">عنوان IP البوابة (SSTP Gateway IP):</label>
+              <input type="text" id="gw-ip-input" value="10.199.0.1" required class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2.5 text-xs text-cyan-300 tech-font font-bold focus:outline-none">
+              <p class="text-[10px] text-slate-500">هذا هو الـ IP الذي ستتخذه البوابة داخل شبكة الأنفاق لتوجيه الحزم.</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="gw-mask-input" class="text-xs font-bold text-slate-300">قناع الشبكة (Subnet Mask):</label>
+              <select id="gw-mask-input" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2.5 text-xs text-white tech-font focus:outline-none">
+                <option value="255.255.255.0" selected>255.255.255.0 (/24 - 254 IPs)</option>
+                <option value="255.255.0.0">255.255.0.0 (/16 - 65,534 IPs)</option>
+                <option value="255.255.255.128">255.255.255.128 (/25 - 126 IPs)</option>
+              </select>
+              <p class="text-[10px] text-slate-500">سعة الشبكة الفرعية المسموحة لاتصالات الأنفاق.</p>
+            </div>
+          </div>
+
+          <!-- IP Allocation Pool Range -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="pool-start-input" class="text-xs font-bold text-slate-300">بداية نطاق الـ Dynamic Pool:</label>
+              <input type="text" id="pool-start-input" value="10.199.0.100" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2 text-xs text-slate-200 tech-font focus:outline-none">
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="pool-end-input" class="text-xs font-bold text-slate-300">نهاية نطاق الـ Dynamic Pool:</label>
+              <input type="text" id="pool-end-input" value="10.199.0.250" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2 text-xs text-slate-200 tech-font focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Port & Encryption -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="sstp-port-input" class="text-xs font-bold text-slate-300">منفذ الاستماع العام (SSTP Public Port):</label>
+              <input type="number" id="sstp-port-input" value="4444" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2 text-xs text-slate-200 tech-font focus:outline-none">
+              <p class="text-[10px] text-amber-400/90">ملاحظة: تم تخصيص المنفذ 4444 لتفادي أخطاء Nonce في MikroTik RouterOS v7.</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-300">التشفير (TLS Cipher Profile):</label>
+              <select class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-4 py-2 text-xs text-white tech-font focus:outline-none">
+                <option selected>AES256-GCM-SHA384 (الأعلى أماناً)</option>
+                <option>AES128-GCM-SHA256 (متوازن الأداء)</option>
+                <option>Compatibility Mode (دعم راوترات قديمة)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Save Button with Status -->
+          <div class="pt-2 flex items-center justify-between">
+            <span id="gw-save-feedback" class="text-xs text-emerald-400 font-bold hidden flex items-center gap-1.5">
+              <span>✔ تم حفظ إعدادات البوابة وتحديث خدمة accel-ppp بنجاح</span>
+            </span>
+            <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition cursor-pointer mr-auto">
+              <span>حفظ وتطبيق إعدادات البوابة</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right 1 Col: Live Tunnel Health & Subnet Info -->
+      <div class="space-y-4">
+        <!-- Subnet Allocation Breakdown -->
+        <div class="bg-[#0c1020] border border-[#1e2642] rounded-2xl p-5 space-y-4 shadow-xl">
+          <h3 class="text-xs font-bold text-white flex items-center gap-2">
+            <span class="text-indigo-400">📊</span>
+            <span>توزيع عناوين الـ IP في شبكة التانل</span>
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between text-slate-400 text-[11px] mb-1">
+                <span>المحجوز كـ Static IP للفروع:</span>
+                <span id="info-static-count" class="font-bold text-cyan-300 tech-font">5 IPs</span>
+              </div>
+              <div class="w-full h-2 bg-[#12182c] rounded-full overflow-hidden">
+                <div class="h-full bg-cyan-400 rounded-full" style="width: 15%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-slate-400 text-[11px] mb-1">
+                <span>المتبقي في النطاق الديناميكي:</span>
+                <span class="font-bold text-emerald-400 tech-font">145 IPs</span>
+              </div>
+              <div class="w-full h-2 bg-[#12182c] rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: 70%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-[#12182c] p-3 rounded-xl border border-[#1e2642] text-[11px] space-y-1 text-slate-400">
+            <div>البوابة الحالية: <bdi id="info-current-gw" class="tech-font text-white font-bold">10.199.0.1</bdi></div>
+            <div>نطاق البث Broadcast: <bdi class="tech-font text-slate-300">10.199.0.255</bdi></div>
+            <div>حالة الشفرة: <bdi class="tech-font text-emerald-400 font-bold">TLS Active</bdi></div>
+          </div>
+        </div>
+
+        <!-- SSTP Quick Diagnostic Notice -->
+        <div class="bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 space-y-2">
+          <h4 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+            <span>🛡️</span>
+            <span>توجيه أجهزة MikroTik للتانل</span>
+          </h4>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            عند ربط راوتر فرع أو كافيه، استخدم المنفذ <bdi class="tech-font text-cyan-300">4444</bdi> مع تفعيل شهادة الأمان، وسيتم منحه الـ Static IP المعين له أدناه فور المصادقة مع FreeRADIUS.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 5. TAB 3: VISUAL SIGNAL TRACER (4-STATION FLOW) -->
+  <!-- ========================================================================= -->
+  <section id="section-tracer" class="hidden space-y-6">
+    <div class="bg-[#0c1020] border border-[#1e2642] rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+      <!-- Title & Target Info -->
+      <div class="flex items-center justify-between flex-wrap gap-4 border-b border-[#1e2642] pb-5">
+        <div>
+          <span class="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider">Live Diagnostic Telemetry</span>
+          <h2 class="text-sm md:text-base font-extrabold text-white mt-0.5">فحص مسار الإشارة المباشر للمشترك: <span id="tracer-sub-name" class="tech-font text-cyan-300">ahmed_ftth</span></h2>
+        </div>
+        <div id="tracer-status-badge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="tracer-status-text">المسار سليم 100% — الخدمة مستقرة</span>
+        </div>
+      </div>
+
+      <!-- 4 Connected Diagnostic Stations -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Station 1: CPE -->
+        <div id="trace-box-1" class="bg-[#12182c] border-2 border-emerald-500/40 rounded-2xl p-4 space-y-3 glow-emerald transition-all">
+          <div class="flex justify-between items-center">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs tech-font">1</span>
+            <span id="t-st1-badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">طبيعي ✔</span>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs">راوتر الموقع (CPE)</h4>
+            <p class="text-[10px] text-slate-400">تطابق عنوان MAC والاعتماد</p>
+          </div>
+          <div class="bg-[#0c1020] p-2 rounded-xl border border-[#1e2642] text-[10px] space-y-1">
+            <div class="text-slate-400">المكان: <bdi id="t-st1-loc" class="text-white font-bold">فرع المهندسين</bdi></div>
+            <div class="text-slate-400">MAC: <bdi id="t-st1-mac" class="tech-font text-cyan-300">00:1A:2B:3C:4D:5E</bdi></div>
+          </div>
+        </div>
+
+        <!-- Station 2: SSTP Tunnel Gateway -->
+        <div id="trace-box-2" class="bg-[#12182c] border-2 border-emerald-500/40 rounded-2xl p-4 space-y-3 glow-emerald transition-all">
+          <div class="flex justify-between items-center">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs tech-font">2</span>
+            <span id="t-st2-badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">نفق مستقر ✔</span>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs">نفق SSTP والجيتواي</h4>
+            <p class="text-[10px] text-slate-400">استقبال الاتصال وتخصيص IP</p>
+          </div>
+          <div class="bg-[#0c1020] p-2 rounded-xl border border-[#1e2642] text-[10px] space-y-1">
+            <div class="text-slate-400">بوابة التانل: <bdi id="t-st2-gw" class="tech-font text-cyan-300">10.199.0.1:4444</bdi></div>
+            <div class="text-slate-400">Static IP: <bdi id="t-st2-ip" class="tech-font text-emerald-400 font-bold">10.199.0.15</bdi></div>
+          </div>
+        </div>
+
+        <!-- Station 3: FreeRADIUS Core -->
+        <div id="trace-box-3" class="bg-[#12182c] border-2 border-emerald-500/40 rounded-2xl p-4 space-y-3 glow-emerald transition-all">
+          <div class="flex justify-between items-center">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs tech-font">3</span>
+            <span id="t-st3-badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">Access-Accept ✔</span>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs">محرك FreeRADIUS</h4>
+            <p class="text-[10px] text-slate-400">فحص الصلاحية والكوتة</p>
+          </div>
+          <div class="bg-[#0c1020] p-2 rounded-xl border border-[#1e2642] text-[10px] space-y-1">
+            <div class="text-slate-400">الصلاحية: <bdi id="t-st3-exp" class="tech-font text-emerald-400 font-bold">ساري (2026-11)</bdi></div>
+            <div class="text-slate-400">الكوتة: <bdi id="t-st3-quota" class="tech-font text-slate-200">114.8 GB متبقية</bdi></div>
+          </div>
+        </div>
+
+        <!-- Station 4: Internet Routing -->
+        <div id="trace-box-4" class="bg-[#12182c] border-2 border-emerald-500/40 rounded-2xl p-4 space-y-3 glow-emerald transition-all">
+          <div class="flex justify-between items-center">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs tech-font">4</span>
+            <span id="t-st4-badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">متصل بالإنترنت ✔</span>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs">بوابة الإنترنت وتوزيع السرعة</h4>
+            <p class="text-[10px] text-slate-400">تطبيق السرعة والمحاسبة</p>
+          </div>
+          <div class="bg-[#0c1020] p-2 rounded-xl border border-[#1e2642] text-[10px] space-y-1">
+            <div class="text-slate-400">السرعة: <bdi class="tech-font text-cyan-300">10M / 50M</bdi></div>
+            <div class="text-slate-400">جلسة المحاسبة: <bdi class="tech-font text-slate-200">radacct Active</bdi></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Resolution Banner -->
+      <div id="trace-resolution-banner" class="bg-[#12182c] border border-emerald-500/30 p-4 rounded-2xl flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h4 id="t-banner-title" class="text-xs font-bold text-white">المسار سليم وجاهز لتمرير الترافيك</h4>
+          <p id="t-banner-desc" class="text-[11px] text-slate-400 mt-0.5">جلسة نفق SSTP مستقرة مع راوتر الموقع بدون انقطاع.</p>
+        </div>
+        <div id="t-banner-btn-box">
+          <button onclick="alert('تم إرسال أمر فحص فوري للراوتر')" class="bg-[#1e2642] hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition">
+            إعادة اختبار المسار اللحظي
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 6. MODAL: ADD NEW SUBSCRIBER + LOCATION + STATIC IP -->
+  <!-- ========================================================================= -->
+  <div id="modal-add-sub" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0c1020] border border-[#1e2642] w-full max-w-lg rounded-3xl p-6 space-y-5 shadow-2xl relative">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-[#1e2642] pb-4">
+        <div>
+          <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+            <span class="text-cyan-400">➕</span>
+            <span>إضافة مشترك جديد وتخصيص Static IP داخل التانل</span>
+          </h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">ربط المشترك باسم الموقع وعنوان الـ IP الثابت داخل نفق SSTP</p>
+        </div>
+        <button onclick="closeAddSubscriberModal()" class="w-8 h-8 rounded-full bg-[#12182c] text-slate-400 hover:text-white flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="submitNewSubscriber(event)" class="space-y-4">
+        
+        <!-- Username & Password -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">اسم المستخدم (Username):</label>
+            <input type="text" id="m-username" required placeholder="مثال: nile_cafe_sstp" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white tech-font focus:outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">كلمة المرور (Password):</label>
+            <input type="text" id="m-password" required value="Pass#2026Net" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white tech-font focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Location Name -->
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-300">اسم المكان / الفرع (Location Name):</label>
+          <input type="text" id="m-location" required placeholder="مثال: كافيه النيل - فرع كورنيش المعادي" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none">
+          <p class="text-[10px] text-slate-500">اسم الفرع أو نقطة التوزيع لسهولة تحديد الراوتر ومتابعة الأعطال.</p>
+        </div>
+
+        <!-- Static IP inside Tunnel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">Static IP داخل نفق SSTP:</label>
+            <input type="text" id="m-static-ip" required placeholder="10.199.0.55" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-cyan-300 tech-font font-bold focus:outline-none">
+            <p class="text-[10px] text-slate-500">يجب أن يكون ضمن شبكة البوابة (10.199.0.x).</p>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">نوع الاتصال (Protocol):</label>
+            <select id="m-protocol" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none">
+              <option value="SSTP VPN (Port 4444)">SSTP VPN (Port 4444)</option>
+              <option value="PPPoE Client">PPPoE Client</option>
+              <option value="Hotspot Card">Hotspot Card</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Profile & MAC Lock -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">الباقة والسرعة (Profile):</label>
+            <select id="m-profile" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none">
+              <option value="Fiber 50M (Unlimited)">Fiber 50M (غير محدود)</option>
+              <option value="Core 100M Dedicated">Core 100M Dedicated</option>
+              <option value="VPN Tunnel 20M">VPN Tunnel 20M</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-300">قفل الماك MAC Lock (اختياري):</label>
+            <input type="text" id="m-mac" placeholder="00:11:22:33:44:55" class="w-full bg-[#12182c] border border-[#1e2642] focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-slate-300 tech-font focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Submit & Cancel -->
+        <div class="pt-3 flex items-center justify-end gap-3 border-t border-[#1e2642]">
+          <button type="button" onclick="closeAddSubscriberModal()" class="bg-[#12182c] hover:bg-[#1e2642] text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition">
+            إلغاء
+          </button>
+          <button type="submit" class="bg-gradient-to-r from-cyan-600 to-sky-500 hover:from-cyan-500 hover:to-sky-400 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-lg shadow-cyan-500/20 transition cursor-pointer">
+            حفظ وإضافة المشترك فوراً
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 7. APPLICATION LOGIC & STATE CONTROLLER -->
+  <!-- ========================================================================= -->
+  <script>
+    // State Store
+    let currentGatewayIP = "10.199.0.1";
+    let subscribers = [
+      {
+        id: 1,
+        username: "ahmed_ftth",
+        location: "فرع المهندسين - راوتر 1",
+        static_ip: "10.199.0.15",
+        protocol: "SSTP VPN (Port 4444)",
+        profile: "Fiber 50M",
+        status: "online",
+        status_text: "متصل الآن (Online)",
+        mac: "00:1A:2B:3C:4D:5E",
+        quota: "114.8 GB متبقية",
+        exp: "ساري (2026-11-23)"
+      },
+      {
+        id: 2,
+        username: "nakheel_cafe",
+        location: "كافيه النخيل - Hotspot",
+        static_ip: "10.199.0.22",
+        protocol: "SSTP VPN (Port 4444)",
+        profile: "VPN Tunnel 20M",
+        status: "online",
+        status_text: "نفق مستقر (Online)",
+        mac: "44:55:66:77:88:99",
+        quota: "غير محدود",
+        exp: "ساري (2026-12-30)"
+      },
+      {
+        id: 3,
+        username: "dokki_core_nas",
+        location: "سنترال الدقي - Mikrotik CCR",
+        static_ip: "10.199.0.50",
+        protocol: "SSTP Gateway Trunk",
+        profile: "Core 100M Dedicated",
+        status: "warn_mac",
+        status_text: "تنبيه: قفل الماك غير متطابق",
+        mac: "AA:BB:CC:DD:EE:01",
+        quota: "مفتوح",
+        exp: "ساري (2027-01-01)"
+      },
+      {
+        id: 4,
+        username: "khalid_office",
+        location: "مكتب الإدارة - فرع التحرير",
+        static_ip: "10.199.0.88",
+        protocol: "SSTP VPN (Port 4444)",
+        profile: "Fiber 50M",
+        status: "expired",
+        status_text: "مرفوض: الكوتة نافدة (0 B)",
+        mac: "11:22:33:44:55:66",
+        quota: "0 B (100% مستهلك)",
+        exp: "ساري (2026-11-05)"
+      },
+      {
+        id: 5,
+        username: "mahmoud_branch",
+        location: "فرع المهندسين - راوتر الطوارئ",
+        static_ip: "10.199.0.95",
+        protocol: "SSTP VPN (Port 4444)",
+        profile: "VPN Tunnel 20M",
+        status: "disabled",
+        status_text: "معطل إدارياً (Disabled)",
+        mac: "99:88:77:66:55:44",
+        quota: "50 GB",
+        exp: "منتهي (2026-10-25)"
+      }
+    ];
+
+    // Render Table
+    function renderSubscribers(items = subscribers) {
+      const tbody = document.getElementById('subscriber-tbody');
+      tbody.innerHTML = '';
+
+      items.forEach(sub => {
+        let statusBadge = '';
+        if (sub.status === 'online') {
+          statusBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>${sub.status_text}</span>`;
+        } else if (sub.status === 'warn_mac') {
+          statusBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit">⚠️ ${sub.status_text}</span>`;
+        } else {
+          statusBadge = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit">⛔ ${sub.status_text}</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-[#12182c]/60 transition border-b border-[#1e2642]/40";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-white">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${sub.status === 'online' ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+              <span class="tech-font text-cyan-300 font-bold">${sub.username}</span>
+            </div>
+          </td>
+          <td class="py-3 px-4 font-semibold text-slate-200">${sub.location}</td>
+          <td class="py-3 px-4">
+            <bdi class="tech-font font-bold text-emerald-400 bg-emerald-950/30 px-2 py-1 rounded-md border border-emerald-500/20">${sub.static_ip}</bdi>
+          </td>
+          <td class="py-3 px-4 text-slate-300 tech-font">${sub.protocol}</td>
+          <td class="py-3 px-4 text-slate-300">${sub.profile}</td>
+          <td class="py-3 px-4">${statusBadge}</td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="inspectInTracer('${sub.username}')" title="فحص المسار اللحظي" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer">
+                ⚡ فحص المسار
+              </button>
+              <button onclick="editStaticIP(${sub.id})" title="تعديل الـ Static IP" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded-lg text-[10px] transition cursor-pointer">
+                ✏️
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update counters
+      document.getElementById('badge-sub-count').textContent = subscribers.length;
+      document.getElementById('footer-total-count').textContent = subscribers.length;
+      document.getElementById('info-static-count').textContent = subscribers.length + " IPs";
+    }
+
+    // Filter Logic
+    function filterSubscribers() {
+      const q = document.getElementById('sub-search-input').value.toLowerCase().trim();
+      const loc = document.getElementById('location-filter').value;
+
+      const filtered = subscribers.filter(s => {
+        const matchesQuery = s.username.toLowerCase().includes(q) || 
+                             s.location.toLowerCase().includes(q) || 
+                             s.static_ip.includes(q);
+        const matchesLoc = (loc === 'ALL') || s.location.includes(loc);
+        return matchesQuery && matchesLoc;
+      });
+
+      renderSubscribers(filtered);
+    }
+
+    // Tab Switching
+    function switchTab(tabId) {
+      document.getElementById('section-subscribers').classList.toggle('hidden', tabId !== 'subscribers');
+      document.getElementById('section-gateway').classList.toggle('hidden', tabId !== 'gateway');
+      document.getElementById('section-tracer').classList.toggle('hidden', tabId !== 'tracer');
+
+      const tabs = ['subscribers', 'gateway', 'tracer'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-btn-' + t);
+        if (t === tabId) {
+          btn.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
+        } else {
+          btn.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+        }
+      });
+    }
+
+    // Modal Control
+    function openAddSubscriberModal() {
+      document.getElementById('modal-add-sub').classList.remove('hidden');
+    }
+    function closeAddSubscriberModal() {
+      document.getElementById('modal-add-sub').classList.add('hidden');
+    }
+
+    // Submit New Subscriber
+    function submitNewSubscriber(e) {
+      e.preventDefault();
+      const username = document.getElementById('m-username').value.trim();
+      const location = document.getElementById('m-location').value.trim();
+      const static_ip = document.getElementById('m-static-ip').value.trim();
+      const protocol = document.getElementById('m-protocol').value;
+      const profile = document.getElementById('m-profile').value;
+      const mac = document.getElementById('m-mac').value.trim() || "00:AA:BB:CC:DD:EE";
+
+      // Collision check
+      if (subscribers.some(s => s.static_ip === static_ip)) {
+        alert("⚠️ تنبيه: عنوان الـ IP (" + static_ip + ") محجوز بالفعل لمشترك آخر!");
+        return;
+      }
+
+      const newSub = {
+        id: Date.now(),
+        username: username,
+        location: location,
+        static_ip: static_ip,
+        protocol: protocol,
+        profile: profile,
+        status: "online",
+        status_text: "متصل الآن (Online)",
+        mac: mac,
+        quota: "100 GB",
+        exp: "ساري (2026-12-31)"
+      };
+
+      subscribers.unshift(newSub);
+      renderSubscribers();
+      closeAddSubscriberModal();
+      alert("✅ تمت إضافة المشترك [" + username + "] وتخصيص الـ Static IP (" + static_ip + ") بنجاح!");
+    }
+
+    // Edit Static IP Quick Prompt
+    function editStaticIP(id) {
+      const sub = subscribers.find(s => s.id === id);
+      if (!sub) return;
+      const newIP = prompt("أدخل عنوان الـ Static IP الجديد داخل نفق SSTP للمشترك (" + sub.username + "):", sub.static_ip);
+      if (newIP && newIP.trim() !== "") {
+        sub.static_ip = newIP.trim();
+        renderSubscribers();
+      }
+    }
+
+    // Save Gateway Settings
+    function saveGatewaySettings(e) {
+      e.preventDefault();
+      const newGW = document.getElementById('gw-ip-input').value.trim();
+      const newPort = document.getElementById('sstp-port-input').value.trim();
+
+      currentGatewayIP = newGW;
+      document.getElementById('top-gateway-ip-badge').textContent = newGW + ":" + newPort;
+      document.getElementById('info-current-gw').textContent = newGW;
+      document.getElementById('t-st2-gw').textContent = newGW + ":" + newPort;
+
+      const feedback = document.getElementById('gw-save-feedback');
+      feedback.classList.remove('hidden');
+      setTimeout(() => {
+        feedback.classList.add('hidden');
+      }, 4000);
+    }
+
+    // Inspect in Tracer
+    function inspectInTracer(username) {
+      const sub = subscribers.find(s => s.username === username) || subscribers[0];
+      switchTab('tracer');
+
+      document.getElementById('tracer-sub-name').textContent = sub.username;
+      document.getElementById('t-st1-loc').textContent = sub.location;
+      document.getElementById('t-st1-mac').textContent = sub.mac;
+      document.getElementById('t-st2-ip').textContent = sub.static_ip;
+      document.getElementById('t-st3-exp').textContent = sub.exp;
+      document.getElementById('t-st3-quota').textContent = sub.quota;
+
+      const badge = document.getElementById('tracer-status-badge');
+      const badgeText = document.getElementById('tracer-status-text');
+      const bTitle = document.getElementById('t-banner-title');
+      const bDesc = document.getElementById('t-banner-desc');
+
+      if (sub.status === 'online') {
+        badge.className = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2";
+        badgeText.textContent = "المسار سليم 100% — الخدمة مستقرة";
+        bTitle.textContent = "المسار سليم وجاهز لتمرير الترافيك";
+        bDesc.textContent = "جلسة نفق SSTP مستقرة مع راوتر الموقع بدون انقطاع أو فقد في الحزم.";
+      } else if (sub.status === 'warn_mac') {
+        badge.className = "bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2";
+        badgeText.textContent = "انقطاع عند محطة 1: عدم تطابق قفل الماك";
+        bTitle.textContent = "تنبيه تشغيلي: راوتر الموقع يرسل MAC غير مسجل";
+        bDesc.textContent = "الراوتر يحاول الدخول بماك جديد، يمكنك تفريغ القفل بضغطة واحدة للسماح له.";
+      } else {
+        badge.className = "bg-rose-500/10 text-rose-400 border border-rose-500/30 px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-2";
+        badgeText.textContent = "انقطاع عند محطة 3: تم الرفض من الراديوس";
+        bTitle.textContent = "فشل المصادقة: الحساب معطل أو الكوتة مستهلكة";
+        bDesc.textContent = "يرفض FreeRADIUS فتح الجلسة لانتهاء الصلاحية أو استهلاك كامل رصيد البيانات.";
+      }
+    }
+
+    // Init
+    renderSubscribers();
+  </script>
+</body>
+</html>

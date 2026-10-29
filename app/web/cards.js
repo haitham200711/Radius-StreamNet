@@ -1,7 +1,7 @@
 // ADV card pages: "مشتركين الكارت" (card series sold to cafés) and "كروت الشحن" (recharge cards).
 "use strict";
 const timeTxt = (v, unit) => { const n = Number(v || 0); if (!n) return "--"; return `${n} ${({ "1": "الأيام", "2": "ساعات", "3": "دقائق" })[String(unit)] || "ساعات"}`; };
-const loadDD = (id, label) => `<span class="dd"><button class="btn-chambray" data-dd="${id}">${label} <i class="fa fa-caret-down"></i></button><div class="dd-menu" id="${id}">
+const loadDD = (id, label) => `<span class="dd"><button class="btn-chambray" data-dd="${id}">${label} <i class="bi bi-caret-down"></i></button><div class="dd-menu" id="${id}">
   ${["PDF", "Excel", "إيصالات"].flatMap(k => ["الكل", "نشط", "مستخدَم"].map((s, j) => k === "Excel" ? `<a data-xls="${["", "active", "used"][j]}">${k} — ${s}</a>` : `<a class="soon">${k} — ${s}</a>`)).join("")}</div></span>`;
 // "تحميل ← Excel": the series table as CSV (rows tagged data-st="active used"); card codes are never exported from here
 function wireExcel(name) {
@@ -22,9 +22,9 @@ PAGES.cardusers = async () => {
   const profs = await api("profiles/full"), pName = id => (profs.find(p => String(p.adv_id) === String(id)) || {}).name || id;
   const mName = id => (MANAGERS.find(m => String(m.adv_id) === String(id)) || {}).username || "admin";
   const unixDate = t => +t > 1e9 ? advDate(new Date(+t * 1000).toISOString().replace("T", " ").slice(0, 19)) : "";
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-credit-card"></i> مشتركين الكارت</span><button class="icon-btn" id="reload"><i class="fa fa-refresh"></i></button></div>
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-credit-card"></i> مشتركين الكارت</span><button class="icon-btn" id="reload"><i class="bi bi-arrow-repeat"></i></button></div>
     <div class="adv-body"><div class="adv-actions" style="margin:0 0 12px">
-      <button class="b-light soon"><i class="fa fa-plus"></i> إنشاء</button><button class="btn-chambray soon">قائمة الكروت</button><button class="btn-red soon">حذف</button>
+      <button class="b-light soon"><i class="bi bi-plus-lg"></i> إنشاء</button><button class="btn-chambray soon">قائمة الكروت</button><button class="btn-red soon">حذف</button>
       <button class="btn-hoki" id="all">عرض الكل</button><button class="btn-plain" id="reload2">تحديث الإحصائيات</button>${loadDD("cLoad", "تحميل")}
       <button class="btn-orange soon">إعادة تفعيل الكروت</button><button class="btn-slate soon">تحقق من</button><button class="b-light soon">تعديل</button>
       <button class="btn-sage soon">المدير</button><button class="btn-lblue soon">استيراد</button></div>
@@ -45,9 +45,9 @@ PAGES.cardusers = async () => {
 
 PAGES.cards = async () => {
   const r = await api("cards?kind=recharge");
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-credit-card"></i> قائمة الكروت</span><button class="icon-btn" id="reload"><i class="fa fa-refresh"></i></button></div>
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-credit-card"></i> قائمة الكروت</span><button class="icon-btn" id="reload"><i class="bi bi-arrow-repeat"></i></button></div>
     <div class="adv-body"><div class="adv-actions" style="margin:0 0 12px">
-      <button class="b-light" id="gen"><i class="fa fa-plus"></i> إنشاء</button><button class="btn-chambray soon">قائمة الكروت</button><button class="btn-red soon">حذف</button>${loadDD("kLoad", "تحميل")}
+      <button class="b-light" id="gen"><i class="bi bi-plus-lg"></i> إنشاء</button><button class="btn-chambray soon">قائمة الكروت</button><button class="btn-red soon">حذف</button>${loadDD("kLoad", "تحميل")}
       <button class="btn-slate soon">تحقق من</button><button class="btn-sage soon">المدير</button><button class="b-green soon">البيع بالتجزئة</button>
       <button class="btn-blue2 soon">تعديل</button><button class="btn-orange soon">حظر</button><button class="btn-orange soon">تفعيل</button></div>
       <div class="tablewrap"><table class="adv-table"><thead><tr><th class="c-chk"></th><th>#</th><th>حزمة</th><th>السعر (حزمة) (EGP)</th><th>السعر (EGP)</th><th>المدير</th><th>الكمية</th>

@@ -3,8 +3,8 @@
 // actually used when printing, and every card can carry a QR with its code.
 "use strict";
 const CT_FIELDS = [["code", "رقم الكارت", 50, 48, 18, "#000000", true], ["price", "السعر", 85, 15, 12, "#1e3a8a", true], ["profile", "الباقة", 18, 15, 11, "#1e3a8a", true],
-  ["series", "رقم الحزمة", 18, 88, 9, "#475569", true], ["company", "اسم الشركة", 50, 15, 13, "#0f172a", false]];
-const CT_DEFAULT = () => ({ id: "t" + Date.now(), name: "قالب جديد", w: 85, h: 54, cols: 3, rows: 7, gap: 2, bg: "", color: "#4f46e5",
+  ["series", "رقم الحزمة", 18, 88, 9, "#475569", true], ["company", "اسم الشركة", 50, 15, 13, "#ffffff", false]];
+const CT_DEFAULT = () => ({ id: "t" + Date.now(), name: "قالب جديد", w: 85, h: 54, cols: 3, rows: 7, gap: 2, bg: "", color: "#0055ff",
   f: Object.fromEntries(CT_FIELDS.map(([k, , x, y, s, c, on]) => [k, { x, y, s, c, on }])), qr: { on: true, x: 85, y: 70, s: 16 } });
 function ctLoad() { try { const v = JSON.parse(SETTINGS_CACHE.card_templates || "[]"); return Array.isArray(v) ? v : []; } catch (_) { return []; } }
 let SETTINGS_CACHE = {};
@@ -119,6 +119,6 @@ PAGES.cardtpl = async () => {
 };
 const CT_PRINT_CSS = `@page{size:A4;margin:6mm}body{margin:0;font-family:Cairo,Tahoma,sans-serif}
   .sheet{display:grid;justify-content:center;page-break-after:always}.sheet:last-child{page-break-after:auto}
-  .ct-card{position:relative;overflow:hidden;border:1px dashed #94a3b8;border-radius:2mm;background-size:cover;background-position:center;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ct-card{position:relative;overflow:hidden;border:1px dashed #8e8e93;border-radius:2mm;background-size:cover;background-position:center;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .ct-f{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-weight:800;font-family:Inter,Cairo,monospace}
   .ct-qr{position:absolute;transform:translate(-50%,-50%)}.ct-qr svg{width:100%;height:100%;display:block}`;

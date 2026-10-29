@@ -4,3 +4,10 @@ node_modules/
 *.log
 /app/radmanager
 /app/radmanager.exe
+radmanager*
+*.exe
+askpass*
+ssh_run*
+scp_upload*
+scratch/
+.agents/

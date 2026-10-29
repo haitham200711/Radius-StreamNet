@@ -67,4 +67,17 @@ function trTree(root) {
 })();
 
 function setLang(l) { try { localStorage.setItem("rm_lang", l); } catch (_) {} location.reload(); }
-document.addEventListener("DOMContentLoaded", () => { const b = document.getElementById("langBtn"); if (b) b.textContent = LANG === "en" ? "عربي" : "EN"; });
+function updateLangButton() {
+  const t = document.getElementById("langTxt");
+  if (t) {
+    t.textContent = LANG === "en" ? "العربية" : "English";
+  } else {
+    const b = document.getElementById("langBtn");
+    if (b) b.textContent = LANG === "en" ? "العربية" : "English";
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", updateLangButton);
+} else {
+  updateLangButton();
+}

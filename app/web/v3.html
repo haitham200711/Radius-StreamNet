@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>التصميم رقم 3: Spatial Topology & Signal Handshake Tracer</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+    
+    body {
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    }
+    .tech-font {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    /* Glow Effects */
+    .glow-cyan {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
+    }
+    .glow-rose {
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.35);
+    }
+    .glow-amber {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+    }
+
+    /* Animated Signal Beam */
+    @keyframes signalFlow {
+      0% { stroke-dashoffset: 40; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .signal-beam {
+      stroke-dasharray: 8 4;
+      animation: signalFlow 1s linear infinite;
+    }
+    .signal-beam-fast {
+      stroke-dasharray: 6 3;
+      animation: signalFlow 0.6s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#050814] text-slate-100 flex flex-col antialiased selection:bg-cyan-500 selection:text-white p-4">
+
+  <!-- ========================================================================= -->
+  <!-- TOP TACTICAL NAVIGATION (Topology Control Bar) -->
+  <!-- ========================================================================= -->
+  <header class="bg-[#0b1021]/90 backdrop-blur-md border-b border-cyan-500/20 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-4">
+      <!-- Neon Brand -->
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-cyan-500/20">
+        🌐
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-white text-sm tracking-wide">StreamRADIUS Matrix</span>
+          <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">التصميم رقم 3</span>
+        </div>
+        <p class="text-[11px] text-slate-400">طوبولوجيا الشبكة المرئية ومحاكي مسار الإشارة (Visual Handshake Tracer)</p>
+      </div>
+    </div>
+
+    <!-- Active Network Telemetry Stats -->
+    <div class="hidden md:flex items-center gap-4">
+      <div class="bg-slate-900/80 border border-slate-800 px-3.5 py-1.5 rounded-xl flex items-center gap-3">
+        <span class="text-xs text-slate-400">حالة نفق SSTP:</span>
+        <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5 tech-font">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          209.38.247.201:4444
+        </span>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 px-3.5 py-1.5 rounded-xl flex items-center gap-3">
+        <span class="text-xs text-slate-400">محرك المصادقة:</span>
+        <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          FreeRADIUS 3.0 (SQL Active)
+        </span>
+      </div>
+    </div>
+
+    <!-- View Switcher -->
+    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 text-xs font-bold">
+      <button onclick="switchView('tracer')" id="btn-view-tracer" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition">
+        ⚡ مسار الإشارة اللحظي
+      </button>
+      <button onclick="switchView('topology')" id="btn-view-topology" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
+        🗺️ خريطة البوابات (Topology)
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN TACTICAL WORKSPACE -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- Subscriber Selection Dial (Quick Dial) -->
+    <div class="bg-[#0b1021] border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-cyan-400 text-sm">🎯</span>
+          <h3 class="font-bold text-white text-xs">اختر مشتركاً لتشغيل محاكي مسار الإشارة واكتشاف نقطة العطل بصرياً:</h3>
+        </div>
+        <span class="text-[11px] text-slate-500">انقر على أي مشترك لاختبار مسار اتصاله من الراوتر للإنترنت</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="subscriber-pills">
+        <!-- Ahmed (Active) -->
+        <button onclick="traceSubscriber('ahmed')" id="pill-ahmed" class="pill-btn p-3 rounded-xl border bg-cyan-950/30 border-cyan-500/40 text-right transition hover:scale-[1.02] flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs tech-font">ahmed_ftth</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <span class="text-[11px] text-slate-400">أحمد عبدالله</span>
+          <span class="text-[10px] text-emerald-400 font-bold">● متصل الآن بنجاح</span>
+        </button>
+
+        <!-- Mahmoud (Expired) -->
+        <button onclick="traceSubscriber('mahmoud')" id="pill-mahmoud" class="pill-btn p-3 rounded-xl border bg-slate-900 border-slate-800 text-right transition hover:scale-[1.02] flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs tech-font">mahmoud_dsl</span>
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          </div>
+          <span class="text-[11px] text-slate-400">محمود إبراهيم</span>
+          <span class="text-[10px] text-rose-400 font-bold">❌ اشتراك منتهي</span>
+        </button>
+
+        <!-- Tamer (MAC Mismatch) -->
+        <button onclick="traceSubscriber('tamer')" id="pill-tamer" class="pill-btn p-3 rounded-xl border bg-slate-900 border-slate-800 text-right transition hover:scale-[1.02] flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs tech-font">tamer_mac</span>
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          </div>
+          <span class="text-[11px] text-slate-400">تامر سعيد</span>
+          <span class="text-[10px] text-amber-400 font-bold">⚠️ ماك غير متطابق</span>
+        </button>
+
+        <!-- Khalid (Quota Depleted) -->
+        <button onclick="traceSubscriber('khalid')" id="pill-khalid" class="pill-btn p-3 rounded-xl border bg-slate-900 border-slate-800 text-right transition hover:scale-[1.02] flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs tech-font">khalid_quota</span>
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+          </div>
+          <span class="text-[11px] text-slate-400">خالد منصور</span>
+          <span class="text-[10px] text-purple-400 font-bold">⚠️ كوتة نافدة (0 B)</span>
+        </button>
+
+        <!-- Salma (Disabled) -->
+        <button onclick="traceSubscriber('salma')" id="pill-salma" class="pill-btn p-3 rounded-xl border bg-slate-900 border-slate-800 text-right transition hover:scale-[1.02] flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs tech-font">salma_disabled</span>
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          </div>
+          <span class="text-[11px] text-slate-400">سلمى فاروق</span>
+          <span class="text-[10px] text-rose-400 font-bold">⛔ معطل إدارياً</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW A: THE LIVE PACKET HANDSHAKE TRACER (4-STATION FLOW) -->
+    <!-- ========================================================================= -->
+    <div id="view-tracer" class="space-y-6">
+      
+      <!-- The Visual 4-Station Flow Canvas -->
+      <div class="bg-[#0b1021] border border-cyan-500/20 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+        <!-- Background Grid Effect -->
+        <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col gap-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs uppercase font-extrabold text-cyan-400 tracking-wider">Visual Packet Handshake Flow</span>
+              <h2 class="text-base font-black text-white mt-1">مسار الإشارة المباشر للمشترك: <span id="trace-target-name" class="tech-font text-cyan-300">ahmed_ftth</span></h2>
+            </div>
+            <div id="trace-overall-badge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="trace-badge-text">المسار سليم 100% — الخدمة تعمل</span>
+            </div>
+          </div>
+
+          <!-- The 4 Connected Stations -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative mt-4">
+            
+            <!-- STATION 1: Client CPE Router -->
+            <div id="station-1" class="station-card bg-slate-900/90 border-2 border-emerald-500/50 rounded-2xl p-5 space-y-3 relative transition-all duration-300 glow-emerald">
+              <div class="flex items-center justify-between">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">1</span>
+                <span id="st1-badge" class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">مطابق ✔</span>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-white text-sm">راوتر العميل (CPE)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">فحص عنوان MAC وكلمة المرور</p>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                <div class="text-slate-400">MAC المسجل: <bdi id="st1-mac" class="tech-font text-slate-200">00:1A:2B:3C:4D:5E</bdi></div>
+                <div class="text-slate-400">كلمة المرور: <bdi class="tech-font text-slate-500">•••••••• (صحيحة)</bdi></div>
+              </div>
+              <div id="st1-err-msg" class="hidden text-[11px] text-rose-400 font-bold bg-rose-950/40 border border-rose-500/30 p-2 rounded-lg">
+                ⚠️ عدم تطابق الماك! الماك القادم مختلف.
+              </div>
+            </div>
+
+            <!-- STATION 2: SSTP Tunnel & Access NAS -->
+            <div id="station-2" class="station-card bg-slate-900/90 border-2 border-emerald-500/50 rounded-2xl p-5 space-y-3 relative transition-all duration-300 glow-emerald">
+              <div class="flex items-center justify-between">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">2</span>
+                <span id="st2-badge" class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">نفق مستقر ✔</span>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-white text-sm">نفق SSTP وبوابة NAS</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">استقبال الجلسة وطلب المصادقة</p>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                <div class="text-slate-400">خادم NAS: <bdi id="st2-nas" class="tech-font text-cyan-300">MikroTik-CCR2004</bdi></div>
+                <div class="text-slate-400">منفذ الاستقبال: <bdi class="tech-font text-slate-200">Port 4444 / SSTP</bdi></div>
+              </div>
+              <div id="st2-err-msg" class="hidden text-[11px] text-rose-400 font-bold bg-rose-950/40 border border-rose-500/30 p-2 rounded-lg">
+                ⚠️ تعذر الوصول لبوابة NAS أو انقطاع النفق.
+              </div>
+            </div>
+
+            <!-- STATION 3: FreeRADIUS AAA Engine -->
+            <div id="station-3" class="station-card bg-slate-900/90 border-2 border-emerald-500/50 rounded-2xl p-5 space-y-3 relative transition-all duration-300 glow-emerald">
+              <div class="flex items-center justify-between">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">3</span>
+                <span id="st3-badge" class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">Access-Accept ✔</span>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-white text-sm">محرك FreeRADIUS</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">فحص الصلاحية ورصيد الكوتة</p>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                <div class="text-slate-400">الصلاحية: <bdi id="st3-exp" class="tech-font text-emerald-400 font-bold">ساري (23-11-2026)</bdi></div>
+                <div class="text-slate-400">الكوتة: <bdi id="st3-quota" class="tech-font text-slate-200">114.8 GB متبقية</bdi></div>
+              </div>
+              <div id="st3-err-msg" class="hidden text-[11px] text-rose-400 font-bold bg-rose-950/40 border border-rose-500/30 p-2 rounded-lg">
+                ❌ رفض المصادقة (Access-Reject).
+              </div>
+            </div>
+
+            <!-- STATION 4: Internet Gateway & Bandwidth -->
+            <div id="station-4" class="station-card bg-slate-900/90 border-2 border-emerald-500/50 rounded-2xl p-5 space-y-3 relative transition-all duration-300 glow-emerald">
+              <div class="flex items-center justify-between">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">4</span>
+                <span id="st4-badge" class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">الخدمة نشطة ✔</span>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-white text-sm">بوابة الإنترنت وتخصيص IP</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">تحديد السرعة وبدء المحاسبة</p>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 text-[11px] space-y-1">
+                <div class="text-slate-400">عنوان الـ IP: <bdi id="st4-ip" class="tech-font text-emerald-400 font-bold">192.0.2.50</bdi></div>
+                <div class="text-slate-400">السرعة المخصصة: <bdi class="tech-font text-slate-200">10M / 50M</bdi></div>
+              </div>
+              <div id="st4-err-msg" class="hidden text-[11px] text-rose-400 font-bold bg-rose-950/40 border border-rose-500/30 p-2 rounded-lg">
+                ⚠️ لا توجد جلسة نشطة على البوابة.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Dynamic Action Banner Below Handshake -->
+        <div id="action-banner" class="mt-6 p-4 rounded-2xl border bg-emerald-950/20 border-emerald-500/30 flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-3">
+            <div id="banner-icon" class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-lg">
+              ✨
+            </div>
+            <div>
+              <h4 id="banner-title" class="font-extrabold text-white text-xs">تم فحص المسار بالكامل بنجاح</h4>
+              <p id="banner-desc" class="text-[11px] text-slate-400 mt-0.5">المشترك متصل الآن وجلسة الـ PPPoE مستقرة على راوتر التوزيع بدون أي فقد في الحزم.</p>
+            </div>
+          </div>
+          
+          <div id="banner-btn-container">
+            <button onclick="disconnectSample()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+              <span>🔌 قطع اتصال الجلسة (PoD)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW B: SPATIAL TOPOLOGY MAP (The Network Fleet Canvas) -->
+    <!-- ========================================================================= -->
+    <div id="view-topology" class="hidden space-y-6">
+      <div class="bg-[#0b1021] border border-cyan-500/20 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <span class="text-xs uppercase font-extrabold text-cyan-400 tracking-wider">Spatial Fleet Topology</span>
+            <h3 class="text-base font-black text-white mt-1">خريطة البوابات وخوادم الـ NAS المرتبطة بالسيرفر المركزي</h3>
+          </div>
+          <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-full text-xs font-bold">
+            نظام الأنفاق SSTP التلقائي (Port 4444)
+          </span>
+        </div>
+
+        <!-- Visual Canvas Nodes -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+          <!-- NAS 1 -->
+          <div class="bg-slate-900/90 border border-cyan-500/30 p-5 rounded-2xl space-y-3 glow-cyan">
+            <div class="flex justify-between items-center">
+              <span class="font-extrabold text-white text-xs tech-font">MikroTik-CCR2004</span>
+              <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">100% متصل</span>
+            </div>
+            <div class="text-[11px] text-slate-400">سنترال التوزيع الرئيسي (Core 1)</div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-400">Tunnel IP:</span><bdi class="tech-font text-cyan-300">198.51.100.1</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">الجلسات المفتوحة:</span><bdi class="tech-font text-emerald-400 font-bold">1 جلسة نشطة</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">Latency:</span><bdi class="tech-font text-slate-300">4.2 ms</bdi></div>
+            </div>
+          </div>
+
+          <!-- NAS 2 -->
+          <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="font-extrabold text-white text-xs tech-font">كافيه النخيل (Hotspot)</span>
+              <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">نفق مستقر</span>
+            </div>
+            <div class="text-[11px] text-slate-400">راوتر كافيه فرع 1 عبر SSTP</div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-400">Tunnel IP:</span><bdi class="tech-font text-cyan-300">10.171.171.50</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">المستخدمين:</span><bdi class="tech-font text-slate-300">جاهز لاستقبال الكروت</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">Latency:</span><bdi class="tech-font text-slate-300">11.8 ms</bdi></div>
+            </div>
+          </div>
+
+          <!-- Central Cloud Server Node -->
+          <div class="bg-gradient-to-tr from-indigo-950 to-slate-900 border border-indigo-500/40 p-5 rounded-2xl space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="font-extrabold text-white text-xs tech-font">Stream-Cloud Core</span>
+              <span class="bg-cyan-500/20 text-cyan-400 text-[10px] px-2 py-0.5 rounded font-bold">السيرفر المركزي</span>
+            </div>
+            <div class="text-[11px] text-slate-400">سيرفر FreeRADIUS & SSTP VPN</div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-400">IP السيرفر العام:</span><bdi class="tech-font text-white font-bold">209.38.247.201</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">بوابة التانل:</span><bdi class="tech-font text-cyan-400">10.199.0.1</bdi></div>
+              <div class="flex justify-between"><span class="text-slate-400">الذاكرة المستخدمة:</span><bdi class="tech-font text-slate-300">412 MB / 2 GB</bdi></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Interactive JavaScript for Design 3 -->
+  <script>
+    const traceScenarios = {
+      ahmed: {
+        name: "ahmed_ftth",
+        badgeText: "المسار سليم 100% — الخدمة تعمل",
+        badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+        bannerTitle: "تم فحص المسار بالكامل بنجاح",
+        bannerDesc: "المشترك متصل الآن وجلسة الـ PPPoE مستقرة على راوتر التوزيع بدون أي مشاكل.",
+        bannerClass: "bg-emerald-950/20 border-emerald-500/30",
+        bannerIcon: "✨",
+        actionBtnHtml: `<button onclick="alert('تم إرسال أمر PoD Disconnect بنجاح')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 px-4 py-2 rounded-xl text-xs font-bold transition">🔌 قطع اتصال الجلسة (PoD)</button>`,
+        st1: { status: "ok", badge: "مطابق ✔", mac: "00:1A:2B:3C:4D:5E" },
+        st2: { status: "ok", badge: "نفق مستقر ✔", nas: "MikroTik-CCR2004" },
+        st3: { status: "ok", badge: "Access-Accept ✔", exp: "ساري (23-11-2026)", quota: "114.8 GB متبقية" },
+        st4: { status: "ok", badge: "الخدمة نشطة ✔", ip: "192.0.2.50" }
+      },
+      mahmoud: {
+        name: "mahmoud_dsl",
+        badgeText: "انقطاع عند محطة 3: اشتراك منتهي الصلاحية",
+        badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+        bannerTitle: "فشل المصادقة بسبب انتهاء الاشتراك (Account Expired)",
+        bannerDesc: "وصلت إشارة الاتصال من الراوتر حتى سيرفر FreeRADIUS، ولكن تم رفض الطلب لانتهاء التاريخ في 26-10-2026.",
+        bannerClass: "bg-rose-950/30 border-rose-500/40",
+        bannerIcon: "⛔",
+        actionBtnHtml: `<button onclick="alert('تم تجديد الاشتراك بنجاح!')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg">🔄 تجديد الاشتراك الآن</button>`,
+        st1: { status: "ok", badge: "مطابق ✔", mac: "00:11:22:AA:BB:CC" },
+        st2: { status: "ok", badge: "نفق مستقر ✔", nas: "MikroTik-CCR2004" },
+        st3: { status: "err", badge: "Access-Reject ✘", exp: "منتهي (26-10-2026)", quota: "488 MB متبقية", err: "❌ الاشتراك منتهي! تم رفض فتح الجلسة." },
+        st4: { status: "blocked", badge: "مغلق ⛔", ip: "غير مخصص" }
+      },
+      tamer: {
+        name: "tamer_mac",
+        badgeText: "انقطاع عند محطة 1: عدم تطابق قفل عنوان MAC",
+        badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+        bannerTitle: "تم حظر الاتصال في محطة راوتر العميل (MAC Mismatch)",
+        bannerDesc: "المشترك مسجل بماك قديم (AA:BB:CC:DD:EE:FF) بينما يحاول الاتصال من راوتر آخر جديد.",
+        bannerClass: "bg-amber-950/30 border-amber-500/40",
+        bannerIcon: "⚠️",
+        actionBtnHtml: `<button onclick="alert('تم تفريغ قفل الماك والسماح للراوتر الجديد بالاتصال!')" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg">🔓 تفريغ قفل الماك الآن</button>`,
+        st1: { status: "err", badge: "ماك غير متطابق ✘", mac: "AA:BB:CC:DD:EE:FF", err: "⚠️ عدم تطابق الماك! الراوتر يرسل ماك مختلف." },
+        st2: { status: "blocked", badge: "متوقف ⛔", nas: "—" },
+        st3: { status: "blocked", badge: "متوقف ⛔", exp: "ساري", quota: "134 GB" },
+        st4: { status: "blocked", badge: "متوقف ⛔", ip: "غير مخصص" }
+      },
+      khalid: {
+        name: "khalid_quota",
+        badgeText: "انقطاع عند محطة 3: نفاد كامل الكوتة (0 B)",
+        badgeClass: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+        bannerTitle: "تم تعليق الجلسة لنفاد سعة الكوتة (Total-Octets-Exceeded)",
+        bannerDesc: "استهلك المشترك 10.00 GB كاملة (100%). تم إيقاف الخدمة بواسطة وحدة محاسبة الراديوس.",
+        bannerClass: "bg-purple-950/30 border-purple-500/40",
+        bannerIcon: "🟣",
+        actionBtnHtml: `<button onclick="alert('تمت إضافة 10 GB كوتة إضافية!')" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg">⚡ شحن كوتة إضافية</button>`,
+        st1: { status: "ok", badge: "مطابق ✔", mac: "—" },
+        st2: { status: "ok", badge: "نفق مستقر ✔", nas: "MikroTik-CCR2004" },
+        st3: { status: "err", badge: "Access-Reject ✘", exp: "ساري (08-11-2026)", quota: "0 B (مستهلكة بالكامل)", err: "⚠️ الكوتة مستهلكة بالكامل (100%)." },
+        st4: { status: "blocked", badge: "مغلق ⛔", ip: "غير مخصص" }
+      },
+      salma: {
+        name: "salma_disabled",
+        badgeText: "انقطاع عند محطة 3: الحساب معطل إدارياً",
+        badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+        bannerTitle: "تم حظر المشترك بقرار إداري (Account Disabled)",
+        bannerDesc: "الحساب موقوف إدارياً من لوحة التحكم، سيرفض السيرفر أي محاولة اتصال قبل إعادة التفعيل.",
+        bannerClass: "bg-rose-950/30 border-rose-500/40",
+        bannerIcon: "⛔",
+        actionBtnHtml: `<button onclick="alert('تمت إعادة تفعيل حساب المشترك بنجاح!')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg">✅ تفعيل الحساب الآن</button>`,
+        st1: { status: "ok", badge: "مطابق ✔", mac: "—" },
+        st2: { status: "ok", badge: "نفق مستقر ✔", nas: "MikroTik-CCR2004" },
+        st3: { status: "err", badge: "Access-Reject ✘", exp: "ساري", quota: "141 GB", err: "⛔ الحساب معطل إدارياً في قاعدة البيانات." },
+        st4: { status: "blocked", badge: "مغلق ⛔", ip: "غير مخصص" }
+      }
+    };
+
+    function traceSubscriber(key) {
+      const data = traceScenarios[key] || traceScenarios.ahmed;
+      
+      // Update Pills styling
+      document.querySelectorAll('.pill-btn').forEach(btn => {
+        btn.className = "pill-btn p-3 rounded-xl border bg-slate-900 border-slate-800 text-right transition hover:scale-[1.02] flex flex-col gap-1";
+      });
+      const activePill = document.getElementById('pill-' + key);
+      if (activePill) {
+        activePill.className = "pill-btn p-3 rounded-xl border bg-cyan-950/40 border-cyan-500/50 text-right transition scale-[1.02] flex flex-col gap-1 shadow-lg shadow-cyan-500/20";
+      }
+
+      // Update Header info
+      document.getElementById('trace-target-name').textContent = data.name;
+      const bBadge = document.getElementById('trace-overall-badge');
+      bBadge.className = "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 border " + data.badgeClass;
+      document.getElementById('trace-badge-text').textContent = data.badgeText;
+
+      // Update Banner
+      const aBanner = document.getElementById('action-banner');
+      aBanner.className = "mt-6 p-4 rounded-2xl border flex items-center justify-between flex-wrap gap-4 " + data.bannerClass;
+      document.getElementById('banner-icon').textContent = data.bannerIcon;
+      document.getElementById('banner-title').textContent = data.bannerTitle;
+      document.getElementById('banner-desc').textContent = data.bannerDesc;
+      document.getElementById('banner-btn-container').innerHTML = data.actionBtnHtml;
+
+      // Update Stations
+      updateStation(1, data.st1);
+      updateStation(2, data.st2);
+      updateStation(3, data.st3);
+      updateStation(4, data.st4);
+
+      // Station values
+      document.getElementById('st1-mac').textContent = data.st1.mac || "—";
+      document.getElementById('st2-nas').textContent = data.st2.nas || "—";
+      document.getElementById('st3-exp').textContent = data.st3.exp || "—";
+      document.getElementById('st3-quota').textContent = data.st3.quota || "—";
+      document.getElementById('st4-ip').textContent = data.st4.ip || "—";
+    }
+
+    function updateStation(num, st) {
+      const card = document.getElementById('station-' + num);
+      const badge = document.getElementById('st' + num + '-badge');
+      const errMsg = document.getElementById('st' + num + '-err-msg');
+
+      card.classList.remove('border-emerald-500/50', 'border-rose-500/60', 'border-amber-500/60', 'border-slate-800', 'glow-emerald', 'glow-rose', 'glow-amber');
+      badge.className = "text-[10px] px-2 py-0.5 rounded font-bold ";
+
+      if (st.status === 'ok') {
+        card.classList.add('border-emerald-500/50', 'glow-emerald');
+        badge.className += "bg-emerald-500/20 text-emerald-400";
+        badge.textContent = st.badge;
+        errMsg.classList.add('hidden');
+      } else if (st.status === 'err') {
+        card.classList.add('border-rose-500/70', 'glow-rose');
+        badge.className += "bg-rose-500/20 text-rose-400";
+        badge.textContent = st.badge;
+        errMsg.classList.remove('hidden');
+        if (st.err) errMsg.textContent = st.err;
+      } else {
+        // blocked
+        card.classList.add('border-slate-800');
+        badge.className += "bg-slate-800 text-slate-500";
+        badge.textContent = st.badge;
+        errMsg.classList.add('hidden');
+      }
+    }
+
+    function switchView(view) {
+      document.getElementById('view-tracer').classList.toggle('hidden', view !== 'tracer');
+      document.getElementById('view-topology').classList.toggle('hidden', view !== 'topology');
+
+      const btnTracer = document.getElementById('btn-view-tracer');
+      const btnTopology = document.getElementById('btn-view-topology');
+
+      if (view === 'tracer') {
+        btnTracer.className = "px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition";
+        btnTopology.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
+      } else {
+        btnTopology.className = "px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition";
+        btnTracer.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
+      }
+    }
+
+    // Default init
+    traceSubscriber('ahmed');
+  </script>
+</body>
+</html>

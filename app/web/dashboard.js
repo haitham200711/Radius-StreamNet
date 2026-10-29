@@ -1,92 +1,394 @@
-// "لوحة التحكم" — modern layout (idea from Haitham's system: header with quick actions, 4 KPI cards, traffic chart,
-// server resources), with REAL numbers only. ADV's invoice panels stay underneath.
+// "لوحة التحكم" — Stream-Net NOC Dashboard (Design #3: Pure Minimal Studio Edition)
+// Dual Light / Dark Mode, high-clarity operational HUD with live telemetry & FreeRADIUS/SSTP indicators.
 "use strict";
-const GB = 1073741824;
-function gbText(b) { b = +b || 0; return b >= 1099511627776 ? (b / 1099511627776).toFixed(2) + " TB" : (b / GB).toFixed(1) + " GB"; }
 
-// small SVG area chart: two series (download / upload) per day, no library
+const GB = 1073741824;
+function gbText(b) {
+  b = +b || 0;
+  return b >= 1099511627776 ? (b / 1099511627776).toFixed(2) + " TB" : (b / GB).toFixed(1) + " GB";
+}
+
+// SVG Network Traffic Usage Chart (Daily Download & Upload) — Works in Light & Dark
 function usageChart(days) {
-  if (!days || !days.length) return '<div class="empty">لسه مفيش بيانات استهلاك</div>';
-  const W = 1400, H = 230, P = 44, n = days.length; // wide and short: stays a strip on big screens
+  if (!days || !days.length) {
+    return '<div class="empty" style="padding:30px;color:var(--text-muted)">لا توجد بيانات استهلاك مسجلة حتى الآن</div>';
+  }
+  const W = 1400, H = 220, P = 40, n = days.length;
   const max = Math.max(1, ...days.map(d => Math.max(+d.down || 0, +d.up || 0)));
   const TB = max >= 2 * 1099511627776, unit = TB ? 1099511627776 : GB;
   const x = i => P + (n === 1 ? (W - 2 * P) / 2 : i * (W - 2 * P) / (n - 1));
   const y = v => H - P - (v / max) * (H - 2 * P);
   const line = k => days.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(+d[k] || 0).toFixed(1)}`).join(" ");
   const area = k => `${line(k)} L${x(n - 1).toFixed(1)},${H - P} L${x(0).toFixed(1)},${H - P} Z`;
-  const grid = [0, .25, .5, .75, 1].map(f => `<line x1="${P}" x2="${W - P}" y1="${y(max * f)}" y2="${y(max * f)}" class="dz-grid"/>
-    <text x="${P - 4}" y="${y(max * f) + 4}" class="dz-tick" text-anchor="end">${(max * f / unit).toFixed(TB ? 1 : 0)}</text>`).join("");
-  const labels = days.map((d, i) => i % Math.ceil(n / 7) === 0 || i === n - 1 ? `<text x="${x(i)}" y="${H - 10}" class="dz-tick" text-anchor="middle">${d.day.slice(5)}</text>` : "").join("");
-  const dots = days.map((d, i) => `<circle cx="${x(i)}" cy="${y(+d.down || 0)}" r="9" class="dz-hit"><title>${d.day}\nتحميل ${gbText(d.down)}\nرفع ${gbText(d.up)}</title></circle>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" class="dz-chart" role="img" aria-label="استهلاك آخر ${n} يوم">
-    <defs><linearGradient id="gDown" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--dz-primary)" stop-opacity=".28"/><stop offset="1" stop-color="var(--dz-primary)" stop-opacity="0"/></linearGradient>
-    <linearGradient id="gUp" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--dz-success)" stop-opacity=".22"/><stop offset="1" stop-color="var(--dz-success)" stop-opacity="0"/></linearGradient></defs>
-    ${grid}<path d="${area("down")}" fill="url(#gDown)"/><path d="${area("up")}" fill="url(#gUp)"/>
-    <path d="${line("down")}" class="dz-line" stroke="var(--dz-primary)"/><path d="${line("up")}" class="dz-line" stroke="var(--dz-success)"/>${labels}${dots}</svg>`;
+
+  const grid = [0, .25, .5, .75, 1].map(f => `
+    <line x1="${P}" x2="${W - P}" y1="${y(max * f)}" y2="${y(max * f)}" stroke="var(--border)" stroke-width="1"/>
+    <text x="${P - 8}" y="${y(max * f) + 4}" fill="var(--text-muted)" font-size="11" font-family="'JetBrains Mono', monospace" text-anchor="end">${(max * f / unit).toFixed(TB ? 1 : 0)}</text>
+  `).join("");
+
+  const labels = days.map((d, i) => i % Math.ceil(n / 7) === 0 || i === n - 1 
+    ? `<text x="${x(i)}" y="${H - 10}" fill="var(--text-muted)" font-size="11" font-family="'JetBrains Mono', monospace" text-anchor="middle">${d.day.slice(5)}</text>` 
+    : "").join("");
+
+  const dots = days.map((d, i) => `
+    <circle cx="${x(i)}" cy="${y(+d.down || 0)}" r="8" fill="transparent" cursor="pointer">
+      <title>${d.day}\nتحميل: ${gbText(d.down)}\nرفع: ${gbText(d.up)}</title>
+    </circle>
+  `).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="dz-chart" role="img" aria-label="استهلاك آخر ${n} يوم" style="width:100%;height:auto;max-height:240px;display:block">
+    <defs>
+      <linearGradient id="gDown" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#0055ff" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="#0055ff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="gUp" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#10b981" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${area("down")}" fill="url(#gDown)"/>
+    <path d="${area("up")}" fill="url(#gUp)"/>
+    <path d="${line("down")}" fill="none" stroke="#0055ff" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${line("up")}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round"/>
+    ${labels}
+    ${dots}
+  </svg>`;
 }
 
 PAGES.dashboard = async () => {
   const d = await api("dashboard");
   let m = {};
-  const isAdmin = ME.admin.role === "admin", money = d.inv_subscribers !== undefined; // a distributor without "إظهار الحسابات بالرئيسية" gets no money fields
-  if (d.mode === "shadow" && isAdmin) { try { m = (await api("sync")).adv_metrics || {}; } catch (_) {} }
-  const qs = m.quick_stats || {}, cs = m.get_cards_sales_stats || {};
-  const online = d.mode === "shadow" && isAdmin ? +d.adv_online || +qs.online_users || 0 : d.online;
-  const today = d.mode === "shadow" && isAdmin && !(d.inv_subscribers || {}).today ? +qs.today_sales_total || 0 : +((d.inv_subscribers || {}).today || 0);
-  const cards = (cs.year || {}).count || d.cards;
-  const days = d.usage_days || [], last = days[days.length - 1] || {};
-  const act = (href, ic, t, cls) => `<a class="dz-act ${cls || ""}" href="#${href}"><span class="dz-bub"><i class="bi ${ic}"></i></span>${t}</a>`;
-  const kpi = (cls, ic, title, val, foot, link) => `<a class="dz-kpi ${cls}" href="#${link}"><div class="dz-kpi-h"><span>${title}</span><span class="dz-ico"><i class="bi ${ic}"></i></span></div>
-    <div class="dz-num">${val}</div><div class="dz-foot">${foot}</div></a>`;
-  const pill = (cls, t) => `<span class="dz-pill ${cls}">${t}</span>`;
-  const inv = key => `<div class="small-box bg-grey-gallery inv-panel" data-inv="${key}"><div class="inv-reload"><i class="fa fa-refresh"></i> Reload</div><div class="inv-rows">
-    ${[["paid", `إجمالي الفواتير المدفوعة (${({ managers: "المدراء", subscribers: "المشتركين", cards: "الكروت" })[key]})`], ["unpaid", "إجمالي الفواتير الغير مدفوعة"], ["count", "محصلة الفواتير"],
-      ["today", "محصلة الفواتير اليومية"], ["month", "محصلة الفواتير الشهرية"]].map(([k, t]) => `<div class="inv-v" data-k="${k}">---</div><div class="inv-v">---</div><div class="inv-l">${t}</div>`).join("")}
-    </div><div class="icon"><i class="fa fa-money"></i></div></div>`;
-  C(`<div class="dz">
-    <div class="dz-card dz-head">
-      <div class="dz-title"><span class="dz-bub big"><i class="bi bi-grid-1x2-fill"></i></span><div><h2>لوحة التحكم</h2>
-        <small>${d.mode === "shadow" ? "وضع المراقبة — النظام بيقرا من ADV بس. آخر مزامنة: " + esc(d.last_sync || "لسه") : "وضع التشغيل — الراديوس الجديد هو الشغال"}</small></div>
-        <span class="dz-status ${d.radius_ok && d.db_ok ? "ok" : "bad"}"><span class="dz-dot"></span>${d.radius_ok && d.db_ok ? "الراديوس وقاعدة البيانات شغالين" : "فيه مشكلة: " + (!d.radius_ok ? "الراديوس واقف " : "") + (!d.db_ok ? "قاعدة البيانات" : "")}</span></div>
-      <div class="dz-actions">${act("user?new=1", "bi-person-plus-fill", "إضافة مشترك", "primary")}${act("subscribers?status=expiring", "bi-arrow-repeat", "تجديد المنتهين قريب", "c-green")}
-        ${isAdmin ? act("cards", "bi-credit-card-2-front-fill", "كروت الشحن", "c-amber") + act("speed", "bi-speedometer2", "التحكم في السرعات", "c-indigo") + act("nas", "bi-router-fill", "الراوترات", "c-sky") : ""}
-        ${act("reports", "bi-file-earmark-bar-graph-fill", "التقارير", "c-slate")}${isAdmin ? act("sync", "bi-arrow-left-right", "المزامنة مع ADV", "c-rose") : ""}</div>
-    </div>
-    <div class="dz-kpis">
-      ${kpi("k-indigo", "bi-broadcast", "المتصلين دلوقتي", fmt(online), pill("p-green", d.mode === "shadow" ? "<span class='dz-dot'></span> من ADV — كل 20 ثانية" : "<span class='dz-dot'></span> على الراديوس بتاعنا") + (isAdmin && d.cards_online ? pill("p-slate", fmt(d.cards_online) + " كارت") : ""), "online")}
-      ${kpi("k-sky", "bi-people-fill", "إجمالي المشتركين", fmt(d.subscribers), pill("p-sky", fmt(d.active) + " نشط") + pill("p-rose", fmt(d.expired) + " منتهي") + (d.disabled ? pill("p-slate", fmt(d.disabled) + " موقوف") : ""), "subscribers")}
-      ${kpi("k-amber", "bi-hourglass-split", `بينتهوا خلال ${d.expiring_days || 3} أيام`, fmt(d.expiring), pill("p-amber", "محتاجين تجديد"), "subscribers?status=expiring")}
-      ${money ? kpi("k-green", "bi-wallet2", "تحصيل النهارده", fmt(today) + " <small>EGP</small>", pill("p-green", "<i class='bi bi-check-circle-fill'></i> الشهر: " + fmt((d.inv_subscribers || {}).month || 0)), "invoices")
-        : isAdmin ? kpi("k-green", "bi-hdd-network-fill", "راوترات شغالة", fmt(d.nas_active), pill("p-green", "عليها مشتركين متصلين"), "nas") : ""}
-    </div>
-    <div class="dz-kpis small">
-      ${isAdmin ? kpi("k-green", "bi-hdd-network-fill", "راوترات عليها متصلين", fmt(d.nas_active), pill("p-slate", fmt(d.nas_total) + " متسجلة عندنا"), "nas") : ""}
-      ${money ? kpi("k-violet", "bi-cash-coin", typeof d.balance === "number" ? "رصيدك" : "الرصيد", typeof d.balance === "number" ? fmt(d.balance) : esc(d.balance), pill("p-violet", "مستلف: " + fmt(d.borrowed_total || m.borrowed_total || 0)), "managers") : ""}
-      ${isAdmin ? kpi("k-amber", "bi-credit-card-2-front-fill", "كروت", fmt(cards), pill("p-amber", fmt(d.cards_used || 0) + " مستخدم"), "cardusers") : ""}
-      ${kpi("k-indigo", "bi-cloud-arrow-down-fill", "استهلاك النهارده", gbText((+last.down || 0) + (+last.up || 0)), pill("p-indigo", "تحميل " + gbText(last.down)) + pill("p-green", "رفع " + gbText(last.up)), "reports")}
-    </div>
-    <div class="dz-card"><div class="dz-card-h"><span><i class="bi bi-graph-up"></i> استهلاك الشبكة — آخر ${days.length || 14} يوم (${(Math.max(0, ...days.map(x => Math.max(+x.down || 0, +x.up || 0))) >= 2 * 1099511627776) ? "تيرا" : "جيجا"})</span>
-      <span class="dz-legend"><i style="background:var(--dz-primary)"></i>تحميل <i style="background:var(--dz-success)"></i>رفع</span></div>${usageChart(days)}</div>
-    <div class="dz-card"><div class="dz-card-h"><span><i class="bi bi-cpu"></i> موارد السيرفر</span><span class="dz-pill p-slate">${esc(d.version || "")}</span></div>
-      <div class="dz-res">${[["cpu", "bi-cpu", "المعالج"], ["ram", "bi-memory", "الرام"], ["disk", "bi-device-hdd", "الهارد"], ["uptime", "bi-clock-history", "مدة التشغيل"],
-        ["ping_radius", "bi-activity", d.mode === "shadow" ? "Ping على ADV Radius" : "Ping على الراديوس"], ["ping_google", "bi-globe2", "Ping على Google"], ["now", "bi-calendar-event", "وقت السيرفر"]]
-        .map(([k, ic, t]) => `<div class="dz-tile"><div class="dz-tile-h"><i class="bi ${ic}"></i>${t}</div><div class="dz-tile-v" data-sys="${k}">...</div><div class="dz-bar"><i data-bar="${k}"></i></div></div>`).join("")}</div></div>
-    ${money ? `<div class="dz-card"><div class="dz-card-h"><span><i class="bi bi-receipt"></i> الفواتير (زي ADV — دوس Reload)</span></div><div class="row3">${inv("managers")}${inv("subscribers")}${inv("cards")}</div></div>` : ""}
-  </div>`);
-  // invoice panels: values only on Reload, like ADV
-  const invData = { managers: d.inv_managers, subscribers: d.inv_subscribers, cards: d.inv_cards };
-  if (d.mode === "shadow") {
-    if (!(d.inv_subscribers || {}).count) invData.subscribers = { paid: qs.today_sales_total || 0, unpaid: qs.unpaid_total || 0, count: qs.today_sales_count || 0, today: qs.today_sales_total || 0, month: "---" };
-    invData.cards = { paid: (cs.year || {}).total || 0, unpaid: 0, count: (cs.year || {}).count || 0, today: (cs.day || {}).total || 0, month: (cs.month || {}).total || 0 };
+  const isAdmin = ME.admin.role === "admin";
+
+  if (d.mode === "shadow" && isAdmin) {
+    try { m = (await api("sync")).adv_metrics || {}; } catch (_) {}
   }
-  document.querySelectorAll(".inv-panel").forEach(p => p.querySelector(".inv-reload").onclick = () => {
-    const v = invData[p.dataset.inv] || {};
-    p.querySelectorAll(".inv-v[data-k]").forEach(e => { const x = v[e.dataset.k]; e.textContent = x === "---" || x === undefined ? "---" : fmt(x); });
-  });
-  api("sysinfo").then(s => document.querySelectorAll("[data-sys]").forEach(e => {
-    const k = e.dataset.sys, v = s[k];
-    e.innerHTML = v && typeof v === "object" ? `${esc(v.ms)} <small>فقد ${esc(v.loss)}</small>` : esc(v ?? "--");
-    const bar = document.querySelector(`[data-bar="${k}"]`), pct = parseFloat(v);
-    if (bar) { if (/%$/.test(String(v)) && !isNaN(pct)) { bar.style.width = Math.min(100, pct) + "%"; bar.className = pct > 85 ? "hot" : pct > 65 ? "warm" : ""; } else bar.parentElement.style.visibility = "hidden"; }
-  })).catch(() => {});
+
+  const qs = m.quick_stats || {};
+  const cs = m.get_cards_sales_stats || {};
+  const online = d.mode === "shadow" && isAdmin ? +d.adv_online || +qs.online_users || 0 : d.online;
+  const days = d.usage_days || [];
+  const last = days[days.length - 1] || {};
+
+  const act = (href, ic, t, cls) => `
+    <a class="dz-act ${cls || ""}" href="#${href}" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:9999px;font-size:12px;font-weight:700;text-decoration:none">
+      <span class="dz-bub" style="width:24px;height:24px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center"><i class="bi ${ic}"></i></span>
+      <span>${t}</span>
+    </a>
+  `;
+
+  const sparkline = (pts, stroke) => `
+    <svg viewBox="0 0 100 24" class="dz-spark" style="width:75px;height:22px;overflow:visible;flex-shrink:0">
+      <path d="${pts}" fill="none" stroke="${stroke || 'var(--accent)'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+
+  const kpi = (cls, ic, title, val, foot, link, spark) => `
+    <a class="dz-kpi ${cls}" href="#${link}" style="border-radius:16px;padding:16px 18px;text-decoration:none;display:block">
+      <div class="dz-kpi-h" style="font-size:12px;color:var(--text-muted);font-weight:700;display:flex;align-items:center;justify-content:space-between">
+        <span>${title}</span>
+        <span class="dz-ico" style="width:34px;height:34px;border-radius:9999px;font-size:16px;display:inline-flex;align-items:center;justify-content:center"><i class="bi ${ic}"></i></span>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin:6px 0">
+        <div class="dz-num" style="font-family:'JetBrains Mono','Cairo',sans-serif;font-feature-settings:'tnum' 1;font-size:1.75rem;font-weight:800;color:var(--text-main)">${val}</div>
+        ${spark || ""}
+      </div>
+      <div class="dz-foot" style="display:flex;flex-wrap:wrap;gap:6px">${foot}</div>
+    </a>
+  `;
+
+  const pill = (cls, t) => `<span class="dz-pill ${cls}" style="padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700">${t}</span>`;
+
+  // SVG Radial Progress Ring (دايرة بنسبة الإنجاز والمسار الدائري)
+  const radialRing = (curr, total, color, size = 66, stroke = 5.5) => {
+    curr = +curr || 0;
+    total = +total || 0;
+    const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((curr / total) * 100))) : 0;
+    const r = (size - stroke) / 2;
+    const circ = 2 * Math.PI * r;
+    const offset = circ * (1 - pct / 100);
+    const center = size / 2;
+    return `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="radial-ring-svg" style="flex-shrink:0">
+        <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${stroke}"/>
+        <circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" 
+                stroke-linecap="round" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" 
+                transform="rotate(-90 ${center} ${center})" style="transition:stroke-dashoffset 0.6s cubic-bezier(0.16,1,0.3,1)"/>
+        <text x="${center}" y="${center}" text-anchor="middle" dominant-baseline="central" 
+              font-family="'JetBrains Mono',monospace" font-size="12" font-weight="800" fill="var(--text-main)">${pct}%</text>
+      </svg>
+    `;
+  };
+
+  // Compact KPI Card with Circular Progress
+  const compactCard = ({ href, icon, title, badge, badgeClass, curr, total, subText, color }) => `
+    <a href="#${href}" class="studio-compact-card">
+      <div class="scc-header">
+        <div class="scc-title-wrap">
+          <span class="scc-icon" style="color:${color}"><i class="bi ${icon}"></i></span>
+          <span>${title}</span>
+        </div>
+        ${badge ? `<span class="dz-pill ${badgeClass}">${badge}</span>` : ''}
+      </div>
+      <div class="scc-body">
+        <div class="scc-ring-wrap">
+          ${radialRing(curr, total, color)}
+        </div>
+        <div class="scc-data">
+          <div class="scc-numbers">
+            <span class="scc-curr">${fmt(curr)}</span>
+            <span class="scc-slash">/</span>
+            <span class="scc-total">${fmt(total)}</span>
+          </div>
+          <div class="scc-sub">${subText}</div>
+        </div>
+      </div>
+    </a>
+  `;
+
+  // Calculate live ratio for progress bars
+  const totalSub = +d.subscribers || 1;
+  const onlinePct = Math.min(100, Math.round((online / totalSub) * 100));
+  const nasTotal = +(d.nas_total || 0) || 1;
+  const nasActive = +(d.nas_active || 0);
+  const nasPct = Math.min(100, Math.round((nasActive / nasTotal) * 100));
+
+  C(`<div class="dz" style="display:flex;flex-direction:column;gap:18px">
+    
+    <!-- 1. Header Hero Telemetry (Pure Minimal Studio) -->
+    <div class="dz-card dz-head" style="border-radius:16px;padding:18px 20px;">
+      <div class="dz-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span class="dz-bub big" style="background:var(--accent-subtle);color:var(--accent);width:44px;height:44px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:20px"><i class="bi bi-grid-1x2-fill"></i></span>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <h2 style="margin:0;font-size:1.25rem;font-weight:800;color:var(--text-main)">Stream RADIUS // Studio</h2>
+              <span class="studio-badge-pill" style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:9999px;background:var(--bg-card-subtle);border:1px solid var(--border);color:var(--text-muted);font-weight:700">Design 3</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap">
+              <small style="color:var(--text-muted);font-size:12px">
+                ${d.mode === "shadow" ? "وضع المراقبة (Shadow) — القراءة المباشرة من ADV. آخر مزامنة: " + esc(d.last_sync || "الآن") : "إدارة المشتركين وبوابات SSTP بالبساطة النقية — محرك FreeRADIUS نشط"}
+              </small>
+              <button type="button" class="btn-mode-quick-switch ${d.mode === 'shadow' ? 'mode-to-live' : 'mode-to-shadow'}" onclick="openModeSwitchModal()" title="انقر لإيقاف أو تشغيل وضع المراقبة">
+                <i class="bi ${d.mode === 'shadow' ? 'bi-lightning-charge-fill' : 'bi-eye-fill'}"></i>
+                <span>${d.mode === 'shadow' ? 'التحويل إلى وضع Live' : 'الرجوع إلى وضع Shadow'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio Actions Ribbon: Side-by-side shortcut tiles with Popup Modals -->
+      <div class="studio-actions-ribbon">
+        <div class="studio-action-tile primary-tile" onclick="openQuickAddUserModal()" title="إضافة مشترك في نافذة منبثقة">
+          <span class="action-tile-ico" style="color:var(--accent)"><i class="bi bi-person-plus-fill"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">إضافة مشترك جديد</span>
+            <span class="action-tile-sub">تفعيل فوري للحساب</span>
+          </div>
+        </div>
+
+        <div class="studio-action-tile" onclick="openQuickRenewalsModal()" title="تجديد الاشتراكات المنتهية">
+          <span class="action-tile-ico" style="color:var(--badge-amber-text)"><i class="bi bi-hourglass-split"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">تجديد المنتهين</span>
+            <span class="action-tile-sub">${fmt(d.expiring)} تستحق التجديد</span>
+          </div>
+        </div>
+
+        <div class="studio-action-tile" onclick="openQuickSpeedModal()" title="التحكم ومضاعفة السرعات">
+          <span class="action-tile-ico" style="color:#8b5cf6"><i class="bi bi-lightning-charge-fill"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">التحكم في السرعات</span>
+            <span class="action-tile-sub">مضاعفة أو زيادة مؤقتة</span>
+          </div>
+        </div>
+
+        <div class="studio-action-tile" onclick="openQuickSstpModal()" title="حالة أنفاق SSTP والفروع">
+          <span class="action-tile-ico" style="color:var(--accent)"><i class="bi bi-shield-lock-fill"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">أنفاق SSTP والفروع</span>
+            <span class="action-tile-sub">بوابات الربط والتشفير</span>
+          </div>
+        </div>
+
+        ${isAdmin ? `
+        <div class="studio-action-tile" onclick="openQuickNasModal()" title="أجهزة NAS والراوترات">
+          <span class="action-tile-ico" style="color:var(--badge-green-text)"><i class="bi bi-hdd-network-fill"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">أجهزة NAS والمواقع</span>
+            <span class="action-tile-sub">${fmt(d.nas_active)} فروع متصلة</span>
+          </div>
+        </div>
+        ` : ''}
+
+                <div class="studio-action-tile" onclick="openQuickCafeModal()" title="كروت الكافيهات والهوتسبوت">
+          <span class="action-tile-ico" style="color:#f59e0b"><i class="bi bi-cup-hot-fill"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">كروت الكافيهات</span>
+            <span class="action-tile-sub">الحزم والكروت المتاحة</span>
+          </div>
+        </div>
+
+        <div class="studio-action-tile" onclick="openQuickCashModal()" title="معاملات الكاش وإنستاباي">
+          <span class="action-tile-ico" style="color:#10b981"><i class="bi bi-cash-stack"></i></span>
+          <div class="action-tile-content">
+            <span class="action-tile-title">معاملات الكاش</span>
+            <span class="action-tile-sub">المحافظ والتحويلات</span>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- 2. Compact Subscriber KPI Cards with Radial Progress Rings (خانات المشتركين الصغيرة بالأشرطة الدائرية) -->
+    <div class="scc-grid">
+      
+      <!-- 1. Online Subscribers -->
+      ${compactCard({
+        href: "online",
+        icon: "bi-broadcast",
+        title: "المشتركون المتصلون",
+        badge: '<span class="pulse-dot"></span> متصل الآن',
+        badgeClass: "p-green",
+        curr: online,
+        total: totalSub,
+        subText: "مشترك نشط على الراوترات",
+        color: "#10b981"
+      })}
+
+      <!-- 2. Active Subscriptions -->
+      ${compactCard({
+        href: "subscribers?status=active",
+        icon: "bi-check2-circle",
+        title: "الاشتراكات السارية",
+        badge: "اشتراك فعال",
+        badgeClass: "p-sky",
+        curr: d.active,
+        total: totalSub,
+        subText: "حساب ساري الصلاحية",
+        color: "var(--accent)"
+      })}
+
+      <!-- 3. Expiring Soon -->
+      ${compactCard({
+        href: "subscribers?status=expiring",
+        icon: "bi-hourglass-split",
+        title: `تنتهي خلال ${d.expiring_days || 3} أيام`,
+        badge: "مطلوب تجديد",
+        badgeClass: "p-amber",
+        curr: d.expiring,
+        total: d.active || totalSub,
+        subText: "توشك على الانتهاء قريباً",
+        color: "#f59e0b"
+      })}
+
+      <!-- 4. Expired Subscriptions -->
+      ${compactCard({
+        href: "subscribers?status=expired",
+        icon: "bi-exclamation-octagon",
+        title: "الاشتراكات المنتهية",
+        badge: "منتهي",
+        badgeClass: "p-rose",
+        curr: d.expired,
+        total: totalSub,
+        subText: "اشتراك منتهي الصلاحية",
+        color: "#ef4444"
+      })}
+
+      <!-- 5. Active NAS Routers -->
+      ${isAdmin ? compactCard({
+        href: "nas",
+        icon: "bi-hdd-network-fill",
+        title: "راوترات NAS النشطة",
+        badge: "خوادم التوزيع",
+        badgeClass: "p-purple",
+        curr: d.nas_active,
+        total: d.nas_total,
+        subText: "راوتر يبث جلسات الآن",
+        color: "#8b5cf6"
+      }) : ""}
+
+      <!-- 6. Suspended / Disabled Accounts -->
+      ${compactCard({
+        href: "subscribers?status=disabled",
+        icon: "bi-slash-circle",
+        title: "الحسابات الموقوفة",
+        badge: "إدارياً",
+        badgeClass: "p-slate",
+        curr: d.disabled,
+        total: totalSub,
+        subText: "موقوف يدوي بدون اتصال",
+        color: "#64748b"
+      })}
+
+    </div>
+
+    <!-- 4. Network Traffic Graph & Consumption -->
+    <div class="dz-card" style="border-radius:16px;padding:18px 20px;">
+      <div class="dz-card-h" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-weight:800;font-size:14px;color:var(--text-main);display:flex;align-items:center;gap:8px">
+          <i class="bi bi-graph-up-arrow" style="color:var(--accent)"></i>
+          <span>حركة ترافيك الشبكة واستيعاب الحزم — آخر ${days.length || 14} يوم</span>
+        </span>
+        <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted)">
+          <span style="display:inline-flex;align-items:center;gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:#0055ff;display:inline-block"></i>تحميل (Download)</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:#10b981;display:inline-block"></i>رفع (Upload)</span>
+        </div>
+      </div>
+      ${usageChart(days)}
+    </div>
+
+    <!-- 5. Server Diagnostics & Resources Strip -->
+    <div class="dz-card" style="border-radius:16px;padding:18px 20px;">
+      <div class="dz-card-h" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-weight:800;font-size:14px;color:var(--text-main);display:flex;align-items:center;gap:8px">
+          <i class="bi bi-cpu-fill" style="color:var(--accent)"></i>
+          <span>المؤشرات الحيوية لخادم السيرفر المركزي (VPS Core)</span>
+        </span>
+        <span class="dz-pill p-slate" style="font-family:monospace">${esc(d.version || "Linux amd64")}</span>
+      </div>
+      <div class="dz-res" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        ${[
+          ["cpu", "bi-cpu", "استهلاك المعالج CPU"],
+          ["ram", "bi-memory", "الذاكرة العشوائية RAM"],
+          ["disk", "bi-device-hdd", "مساحة القرص الصلب"],
+          ["uptime", "bi-clock-history", "مدة تشغيل السيرفر"],
+                    ["ping_google", "bi-globe2", "Ping بوابة الإنترنت"],
+          ["now", "bi-calendar-event", "توقيت السيرفر اللحظي"]
+        ].map(([k, ic, t]) => `
+          <div class="dz-tile" style="background:var(--bg-card-subtle);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+            <div class="dz-tile-h" style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+              <i class="bi ${ic}" style="color:var(--accent)"></i>
+              <span>${t}</span>
+            </div>
+            <div class="dz-tile-v" data-sys="${k}" style="font-family:'JetBrains Mono','Inter',monospace;font-size:1.15rem;font-weight:800;color:var(--text-main);margin:6px 0">...</div>
+            <div class="dz-bar" style="height:5px;background:var(--border);border-radius:9999px;overflow:hidden">
+              <i data-bar="${k}" style="display:block;height:100%;width:0;background:var(--accent);transition:width 0.2s ease-out"></i>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+  </div>`);
+
+  // Live sysinfo fetch
+  api("sysinfo").then(s => {
+    document.querySelectorAll("[data-sys]").forEach(e => {
+      const k = e.dataset.sys, v = s[k];
+      e.innerHTML = v && typeof v === "object" ? `<bdi>${esc(v.ms)}</bdi> <small style="font-size:11px;color:var(--text-muted)">فقد ${esc(v.loss)}</small>` : `<bdi>${esc(v ?? "--")}</bdi>`;
+      const bar = document.querySelector(`[data-bar="${k}"]`), pct = parseFloat(v);
+      if (bar) {
+        if (/%$/.test(String(v)) && !isNaN(pct)) {
+          bar.style.width = Math.min(100, pct) + "%";
+          bar.style.background = pct > 85 ? "#ef4444" : pct > 65 ? "#f59e0b" : "var(--accent)";
+        } else {
+          bar.parentElement.style.visibility = "hidden";
+        }
+      }
+    });
+  }).catch(() => {});
 };

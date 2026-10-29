@@ -8,7 +8,7 @@ PAGES.bandwidth = async () => {
   const spd = p => `${mbps(p.down_speed).replace(" Mbps", "Mb").replace(" Kbps", "Kb")} / ${mbps(p.up_speed).replace(" Mbps", "Mb").replace(" Kbps", "Kb")}`;
   const slider = (name, v) => `<div class="bw-slider"><span>%0</span><input type="range" name="${name}" min="0" max="1000" step="5" value="${v}"><span>%1 000</span>
     <b class="bw-val">%${v}</b><div class="bw-ticks"><i>0</i><i>250</i><i>500</i><i>750</i><i>1 000</i></div></div>`;
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-tachometer"></i> مراقبة الباندويث</span></div><div class="adv-body"><form id="bwf">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-tachometer"></i> مراقبة الباندويث</span></div><div class="adv-body"><form id="bwf">
     <div class="adv-row"><div class="adv-f"><select id="bwProf"><option value="">كل العروض</option>${list.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></div>
       <div class="adv-f adv-toggle"><label class="switch"><input type="checkbox" id="bwOnlyOn" checked><span>تطبيق السحب على البروفايلات المفعّلة فقط</span></label></div>
       <div class="adv-actions"><button type="button" class="btn-unified on" id="bwUni">تحكم موحد</button><button type="button" class="btn-plain" id="bwSep">تحميل / رفع منفصل</button></div></div>

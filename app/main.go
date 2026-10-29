@@ -103,6 +103,7 @@ func migrate() {
 		db.Exec("INSERT IGNORE INTO rm_settings(k,v) VALUES(?,?)", k, v)
 	}
 	ensureSessionColumns()
+	applyStaticRoutesFromDB()
 	db.Exec("ALTER TABLE rm_invoices ADD COLUMN IF NOT EXISTS adv_op INT NULL")
 	db.Exec("ALTER TABLE rm_subscribers ADD COLUMN IF NOT EXISTS auto_renew_mgr TINYINT NOT NULL DEFAULT 0")
 	db.Exec("ALTER TABLE rm_balance_log ADD COLUMN IF NOT EXISTS adv_id VARCHAR(40) NULL")

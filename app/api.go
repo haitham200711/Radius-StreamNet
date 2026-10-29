@@ -42,6 +42,9 @@ func routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/maintenance/sweep", authed("admin", true, sweepNowAPI))
 	mux.HandleFunc("GET /api/speed", authed("admin", false, speedAPI))
 	mux.HandleFunc("POST /api/speed", authed("admin", false, speedAPI))
+	mux.HandleFunc("GET /api/network/routes", authed("admin", false, networkRoutesGetAPI))
+	mux.HandleFunc("POST /api/network/routes", authed("admin", true, networkRouteAddAPI))
+	mux.HandleFunc("POST /api/network/routes/delete", authed("admin", true, networkRouteDelAPI))
 	mux.HandleFunc("GET /api/vpn", authed("admin", false, vpnAPI))
 	mux.HandleFunc("POST /api/vpn", authed("admin", false, vpnAPI))
 	mux.HandleFunc("GET /api/cafe", authed("admin", false, cafeAPI))
@@ -317,12 +320,13 @@ func subscriberAPI(w http.ResponseWriter, r *http.Request, a *Admin) {
 	}
 	u := s[0]["username"]
 	inv, _ := queryRows("SELECT * FROM rm_invoices WHERE subscriber_id=? ORDER BY id DESC LIMIT 100", id)
-	sess, _ := queryRows(`SELECT acctstarttime,acctstoptime,nasipaddress,framedipaddress,callingstationid,acctinputoctets,acctoutputoctets,acctterminatecause
+	sess, _ := queryRows(`SELECT radacctid,acctsessionid,acctstarttime,acctstoptime,nasipaddress,nasportid,framedipaddress,callingstationid,acctsessiontime,acctinputoctets,acctoutputoctets,acctterminatecause
 		FROM radacct WHERE username=? ORDER BY radacctid DESC LIMIT 50`, u)
 	online, _ := queryRows("SELECT * FROM rm_adv_online WHERE username=?", u)
 	log, _ := queryRows("SELECT ts,admin,action,details FROM rm_audit WHERE target=? ORDER BY id DESC LIMIT 100", u)
 	rad, _ := queryRows("SELECT 'check' AS t,attribute,op,IF(attribute LIKE '%Password%','••••',value) AS value FROM radcheck WHERE username=? UNION ALL SELECT 'reply',attribute,op,value FROM radreply WHERE username=? UNION ALL SELECT 'group',groupname,'',priority FROM radusergroup WHERE username=?", u, u, u)
-	writeJSON(w, 200, map[string]any{"subscriber": s[0], "invoices": inv, "sessions": sess, "adv_online": online, "log": log, "radius": rad})
+	auths, _ := queryRows("SELECT id, username, reply, authdate, class FROM radpostauth WHERE username=? ORDER BY id DESC LIMIT 20", u)
+	writeJSON(w, 200, map[string]any{"subscriber": s[0], "invoices": inv, "sessions": sess, "adv_online": online, "log": log, "radius": rad, "auth_attempts": auths})
 }
 
 type subIn struct {
@@ -846,6 +850,20 @@ func nasListAPI(w http.ResponseWriter, r *http.Request, a *Admin) {
 	for _, x := range adv {
 		x["online"] = online[fmt.Sprint(x["ip"])]
 	}
+	localOnline := map[string]int{}
+	lRows, _ := db.Query("SELECT nasipaddress, COUNT(*) FROM radacct WHERE acctstoptime IS NULL GROUP BY nasipaddress")
+	for lRows != nil && lRows.Next() {
+		var ip string
+		var n int
+		lRows.Scan(&ip, &n)
+		localOnline[ip] = n
+	}
+	if lRows != nil {
+		lRows.Close()
+	}
+	for _, x := range local {
+		x["online"] = localOnline[fmt.Sprint(x["nasname"])]
+	}
 	writeJSON(w, 200, map[string]any{"local": local, "adv": adv})
 }
 
@@ -857,8 +875,17 @@ func nasDeleteAPI(w http.ResponseWriter, r *http.Request, a *Admin) {
 }
 
 func onlineAPI(w http.ResponseWriter, r *http.Request, a *Admin) {
-	own, _ := queryRows(`SELECT username,nasipaddress,framedipaddress,callingstationid,acctstarttime,acctinputoctets,acctoutputoctets FROM radacct
-		WHERE acctstoptime IS NULL ORDER BY acctstarttime DESC LIMIT 5000`)
+	own, _ := queryRows(`SELECT r.radacctid, r.acctsessionid, r.username, r.nasipaddress, r.nasportid, r.framedipaddress, r.callingstationid,
+		r.acctstarttime, r.acctsessiontime, r.acctinputoctets, r.acctoutputoctets,
+		s.id AS sid, s.manager_id AS mid, s.firstname, s.lastname, s.expiration, s.mac AS bound_mac,
+		p.name AS profile, p.down_speed, p.up_speed, m.username AS manager,
+		COALESCE(n.shortname, r.nasipaddress) AS nas_name
+		FROM radacct r
+		LEFT JOIN rm_subscribers s ON s.username=r.username
+		LEFT JOIN rm_profiles p ON p.id=s.profile_id
+		LEFT JOIN rm_managers m ON m.id=s.manager_id
+		LEFT JOIN nas n ON n.nasname=r.nasipaddress
+		WHERE r.acctstoptime IS NULL ORDER BY r.acctstarttime DESC LIMIT 5000`)
 	adv, _ := queryRows(`SELECT o.*, s.id AS sid, s.manager_id AS mid, s.firstname, s.lastname, s.expiration, s.mac AS bound_mac, p.name AS profile, p.down_speed, p.up_speed, m.username AS manager,
 		JSON_UNQUOTE(JSON_EXTRACT(s.extra,'$.serv_name')) AS serv_name, JSON_UNQUOTE(JSON_EXTRACT(s.extra,'$.portid')) AS portid, JSON_UNQUOTE(JSON_EXTRACT(s.extra,'$.creationby')) AS created_by
 		FROM rm_adv_online o LEFT JOIN rm_subscribers s ON s.username=o.username LEFT JOIN rm_profiles p ON p.id=s.profile_id LEFT JOIN rm_managers m ON m.id=s.manager_id
@@ -868,7 +895,8 @@ func onlineAPI(w http.ResponseWriter, r *http.Request, a *Admin) {
 		x["nas_name"] = names[fmt.Sprint(x["nas"])]
 	}
 	if managerScope(a) != nil { // distributor: only his own subscribers' sessions
-		adv, own = keepScoped(a, adv, "mid"), []map[string]any{}
+		adv = keepScoped(a, adv, "mid")
+		own = keepScoped(a, own, "mid")
 	}
 	writeJSON(w, 200, map[string]any{"own": own, "adv": adv})
 }

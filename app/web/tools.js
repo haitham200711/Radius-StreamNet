@@ -4,7 +4,7 @@ const sizeTxt = b => b > 1048576 ? (b / 1048576).toFixed(2) + " MB" : (b / 1024)
 PAGES.backup = async () => {
   const rows = await api("backups");
   const sel = new Set();
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-database"></i> نسخ إحتياطية & استرجاعها <small>(تم إيجاد ${rows.length} نتائج )</small></span></div><div class="adv-body">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-database"></i> نسخ إحتياطية & استرجاعها <small>(تم إيجاد ${rows.length} نتائج )</small></span></div><div class="adv-body">
     <div class="adv-actions" style="margin:0 0 12px"><button class="b-light" id="bkNew">إنشاء</button><button class="btn-chambray" id="bkDl">تحميل</button><button class="b-light soon">نسخ رابط النسخة</button>
       <button class="b-light" id="bkUp">رفع</button><button class="b-light" id="bkRestore">استرجاع</button><input type="file" id="bkFile" accept=".gz" hidden><button class="b-light soon">استعادة البيانات المحددة</button><button class="b-light soon">تنزيل من خادم خارجي</button><button class="btn-red" id="bkDel">حذف</button></div>
     <div class="adv-tools"><label>إظهار <select>${[10, 25, 50, 100].map(n => `<option>${n} في الصفحة</option>`).join("")}</select> نتائج</label><label>بحث <input id="bkq"></label></div>
@@ -21,7 +21,7 @@ PAGES.backup = async () => {
   $("#bkRestore").onclick = () => {
     if (sel.size !== 1) return toast("اختار نسخة واحدة", true);
     const name = [...sel][0];
-    const m = modal(`<h3 class="red"><i class="fa fa-warning"></i> استرجاع نسخة</h3><p>الاسترجاع <b>هيمسح كل البيانات الحالية</b> ويرجّع النسخة: <b dir="ltr">${esc(name)}</b></p>
+    const m = modal(`<h3 class="red"><i class="bi bi-exclamation-triangle-fill"></i> استرجاع نسخة</h3><p>الاسترجاع <b>هيمسح كل البيانات الحالية</b> ويرجّع النسخة: <b dir="ltr">${esc(name)}</b></p>
       <p class="muted">خد نسخة جديدة الأول ("إنشاء") لو مش متأكد.</p><form class="form" id="rsf"><label class="full">علشان تأكد اكتب: نعم استرجع<input name="Confirm" autocomplete="off"></label>
       <div class="form-actions full"><button type="button" class="b-cancel" data-close>إلغاء</button><button class="btn-red">استرجاع</button></div></form>`);
     $("#rsf", m).onsubmit = async e => { e.preventDefault(); await act(() => api("backups/restore", { method: "POST", body: { Name: name, Confirm: formData(e.target).Confirm } }), "اترجعت النسخة"); closeModal(); PAGES.backup(); };
@@ -43,7 +43,7 @@ PAGES.backup = async () => {
 PAGES.trash = async () => {
   const rows = await api("trash");
   const sel = new Set();
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-trash"></i> سلة المحذوفات</span></div><div class="adv-body">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-trash3-fill"></i> سلة المحذوفات</span></div><div class="adv-body">
     <div class="adv-actions" style="margin:0 0 12px"><button class="b-green" data-ta="restore">استعادة المحدد</button><button class="btn-orange" data-ta="purge">حذف المحدد</button><button class="btn-red" id="trEmpty">إفراغ السلة</button>
       <span class="spacer"></span><button class="btn-lblue">الكل</button>${["مشتركين", "حزم كروت", "كروت", "مديرين", "عروض", "NAS", "باك اب"].map(t => `<button class="btn-plain">${t}</button>`).join("")}</div>
     <div class="tablewrap"><table class="adv-table"><thead><tr><th class="c-chk"></th><th>#</th><th>الاسم</th><th>النوع</th><th>معلومات إضافية</th><th>حذف بواسطة</th><th>تاريخ الحذف</th><th>الحجم</th><th>إجراءات</th></tr></thead>
@@ -60,7 +60,7 @@ PAGES.maintenance = async () => {
   const m = await api("maintenance");
   const st = on => on ? '<span class="st-on">يعمل</span>' : '<span class="st-off">ﻻ يعمل</span>';
   const sec = (title, body, extra = "") => `<div class="mt-sec"><h4>${title}</h4>${body}<div class="adv-actions">${extra}</div></div>`;
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-wrench"></i> صيانة النظام</span></div><div class="adv-body mt-grid">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-wrench-adjustable"></i> صيانة النظام</span></div><div class="adv-body mt-grid">
     ${sec("تحديث النظام", "<p>يقوم هذا الزر بالاستعلام عن ما اذا كان هناك تحديثات جديدة ام لا</p>", '<button class="b-light soon">تحديث الإصدار</button>')}
     ${sec("RADIUS Server", `<p>الحالة : ${st(m.radius)}</p>`, '<button class="b-light" data-m="radius_start">تشغيل</button><button class="btn-red" data-m="radius_stop">إيقاف</button><button class="btn-orange" data-m="radius_restart">إعادة تشغيل</button>')}
     ${sec("الحماية ضد المتطفلين", `<p>الحالة : ${st(m.fail2ban)}</p><p class="muted">ملحوظة: لا يجب أن يكون هناك NAT في الشبكة الخاصة بك، حيث يمكن أن يؤدي ذلك إلى حظر العناوين IP بشكل غير صحيح.</p>`, '<button class="b-light soon">تشغيل</button><button class="btn-red soon">إيقاف</button>')}
@@ -72,7 +72,7 @@ PAGES.maintenance = async () => {
     ${sec("ضغط البيانات", "<p>تنظيف الجداول وتصغير القاعدة</p>", '<button class="b-light soon">ضغط البيانات للمشتركين</button><button class="b-light soon">ضغط البيانات للكروت</button>')}
     ${sec("فصل كل المتصلين", "<p>كل مشترك متصل على الراديوس الجديد يتفصل ويرجع يدخل لوحده (Live بس).</p>", '<button class="btn-red" id="mDisc">افصل الكل</button>')}
     ${sec("ربط سيرفر ميكروتيك", `<p>الأوامر اللي بتربط سيرفر PPPoE بالراديوس ده (RouterOS 6). <b>ما تتطبقش على سيرفر شغال غير بعد موافقة المالك.</b></p>
-      <pre id="mScript" class="hidden" dir="ltr" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px"></pre>`, '<button class="b-light" id="mGen">طلّع الأوامر</button><button class="b-light hidden" id="mCopy">نسخ</button>')}
+      <pre id="mScript" class="hidden" dir="ltr" style="white-space:pre-wrap;background:#ffffff;color:rgba(255,255,255,0.08);padding:10px;border-radius:8px"></pre>`, '<button class="b-light" id="mGen">طلّع الأوامر</button><button class="b-light hidden" id="mCopy">نسخ</button>')}
     ${sec("Power Control", `<p>إصدار النظام ${esc(m.version)}</p>`, '<button class="btn-orange" id="mReboot">إعادة تشغيل السيرفر</button>')}
   </div></div>`);
   const typed = (ask, word, action) => async () => {
@@ -91,7 +91,7 @@ PAGES.maintenance = async () => {
 
 PAGES.genadj = async () => {
   const FIELDS = [["", "اختر شيئاً"], ["profile", "اسم العرض"], ["manager", "المدير التابع له"], ["expiration", "تاريخ الانتهاء"], ["num_doc", "رقم العقد"], ["address", "العنوان"], ["notes", "ملاحظات"], ["mobile", "رقم الهاتف"]];
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-edit"></i> تعديلات عامة</span></div><div class="adv-body"><form id="gaf"><div class="g12">
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-pencil-square"></i> تعديلات عامة</span></div><div class="adv-body"><form id="gaf"><div class="g12">
       <div class="fg s3"><label>العنصر</label><select name="Field">${FIELDS.map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div>
       <div class="fg s4"><label>القيمة #</label><input name="Match" placeholder="القيمة الحالية"></div>
       <div class="fg s4"><label>قيمة جديدة</label><input name="Value"></div>
@@ -102,7 +102,7 @@ PAGES.genadj = async () => {
     e.preventDefault(); const f = formData(e.target);
     if (!f.Field) return toast("اختار العنصر", true);
     const p = await act(() => api("subscribers/genadj?preview=1", { method: "POST", body: f }));
-    $("#gaOut").innerHTML = `<div class="alert" style="background:#3c8dbc">تم إيجاد ${p.count} مشترك قيمة «${esc(FIELDS.find(x => x[0] === f.Field)[1])}» عندهم = «${esc(f.Match)}». <button type="button" class="b-green" id="gaGo">تطبيق التعديل على ${p.count}</button></div>`;
+    $("#gaOut").innerHTML = `<div class="alert" style="background:#0055ff">تم إيجاد ${p.count} مشترك قيمة «${esc(FIELDS.find(x => x[0] === f.Field)[1])}» عندهم = «${esc(f.Match)}». <button type="button" class="b-green" id="gaGo">تطبيق التعديل على ${p.count}</button></div>`;
     $("#gaGo").onclick = async () => { if (!confirm(`تطبيق على ${p.count} مشترك؟`)) return; const r = await act(() => api("subscribers/genadj", { method: "POST", body: f })); toast(`اتعدل ${r.n} مشترك`); $("#gaOut").innerHTML = ""; };
   };
   $("#gaLog").onclick = () => { location.hash = "audit"; };

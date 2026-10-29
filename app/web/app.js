@@ -1,3 +1,282 @@
+
+// =============================================================================
+// Linux Static Route Management Modal
+// =============================================================================
+window.openStaticRouteModal = async function() {
+  try {
+    const data = await api("network/routes");
+    const ifaces = data.interfaces || [];
+    const staticRoutes = data.static_routes || [];
+    const kernelRoutes = data.kernel_routes || [];
+
+    const ifaceOptions = ifaces.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join("");
+
+    const html = `
+      <div class="quick-modal-content wide" style="max-width:840px">
+        <div class="quick-modal-head" style="border-bottom:1px solid var(--border);padding-bottom:14px">
+          <div class="quick-modal-icon" style="background:var(--accent-subtle);color:var(--accent)">
+            <i class="bi bi-signpost-split-fill"></i>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <h3 style="margin:0;font-size:1.15rem;font-weight:800">إدارة المسارات الثابتة (Linux Static Routes)</h3>
+              <span class="status-pill active" style="font-size:11px">محرك لينكس نشط</span>
+            </div>
+            <small style="color:var(--text-muted)">إضافة وتطبيق مسارات التوجيه الثابتة مباشرة في كيرنل السيرفر لحزم الفروع وشبكات الراوترات</small>
+          </div>
+        </div>
+
+        <div class="quick-modal-body" style="padding:18px 0;display:flex;flex-direction:column;gap:18px">
+          
+          <!-- Route Creator Bento Subcard -->
+          <form id="formAddStaticRoute" class="bento-subcard" style="box-shadow:none">
+            <div class="bento-subcard-head" style="padding:12px 16px">
+              <div class="bento-head-title">
+                <div class="bento-head-icon" style="width:26px;height:26px;font-size:13px"><i class="bi bi-plus-circle-fill"></i></div>
+                <h4 style="margin:0;font-size:13px;font-weight:800">إضافة مسار ثابت جديد (New Static Route)</h4>
+              </div>
+            </div>
+            <div class="bento-subcard-body" style="padding:16px;gap:12px 14px">
+              <div class="form-group fg s4">
+                <label style="font-size:11.5px;font-weight:700">الشبكة المستهدفة (Destination) *</label>
+                <input name="destination" required placeholder="مثال: 192.168.10.0/24" dir="ltr" class="mono" style="height:38px;font-size:12.5px">
+              </div>
+              <div class="form-group fg s4">
+                <label style="font-size:11.5px;font-weight:700">عنوان البوابة (Gateway IP) *</label>
+                <input name="gateway" required placeholder="مثال: 10.199.0.2" dir="ltr" class="mono" style="height:38px;font-size:12.5px">
+              </div>
+              <div class="form-group fg s4">
+                <label style="font-size:11.5px;font-weight:700">الواجهة (Interface) اختياري</label>
+                <select name="interface" style="height:38px;font-size:12px;cursor:pointer">
+                  <option value="">— تلقائي (Auto dev) —</option>
+                  ${ifaceOptions}
+                </select>
+              </div>
+              <div class="form-group fg s9">
+                <label style="font-size:11.5px;font-weight:700">الوصف أو الفرع المستهدف</label>
+                <input name="description" placeholder="مثال: مسار شبكة راوتر كافيه المعادي / نفق SSTP" style="height:38px;font-size:12.5px">
+              </div>
+              <div class="fg s3" style="display:flex;align-items:flex-end">
+                <button type="submit" id="btnAddRouteSubmit" class="btn-primary" style="height:38px;width:100%;font-size:12.5px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:6px">
+                  <i class="bi bi-plus-lg"></i> تطبيق وحفظ
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Static Routes Table -->
+          <div class="bento-subcard" style="box-shadow:none">
+            <div class="bento-subcard-head" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div class="bento-head-title">
+                <div class="bento-head-icon" style="width:26px;height:26px;font-size:13px"><i class="bi bi-hdd-network-fill"></i></div>
+                <h4 style="margin:0;font-size:13px;font-weight:800">المسارات الثابتة المخصصة (${staticRoutes.length})</h4>
+              </div>
+              <span style="font-size:11px;color:var(--text-muted)">يتم تطبيقها فورياً وحفظها تلقائياً عند إعادة تشغيل السيرفر</span>
+            </div>
+            <div class="tablewrap" style="border:0;max-height:240px;overflow-y:auto">
+              <table class="modern-dist-table" style="font-size:12.5px">
+                <thead>
+                  <tr>
+                    <th>الشبكة (Destination)</th>
+                    <th>البوابة (Gateway)</th>
+                    <th>الواجهة (Dev)</th>
+                    <th>الوصف</th>
+                    <th>الحالة</th>
+                    <th style="width:70px;text-align:center">إجراء</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${staticRoutes.map(r => `
+                    <tr>
+                      <td><b class="mono" style="color:var(--accent)"><bdi dir="ltr">${esc(r.destination)}</bdi></b></td>
+                      <td><span class="mono"><bdi dir="ltr">${esc(r.gateway)}</bdi></span></td>
+                      <td><span class="mono" style="color:var(--text-muted)"><bdi dir="ltr">${esc(r.iface || 'تلقائي')}</bdi></span></td>
+                      <td><span>${esc(r.description || '—')}</span></td>
+                      <td><span class="status-pill active" style="font-size:10px">نشط</span></td>
+                      <td style="text-align:center">
+                        <button type="button" class="btn-cancel btn-del-route" data-route-id="${r.id}" data-route-dst="${esc(r.destination)}" title="حذف المسار" style="padding:4px 8px;color:#ef4444;font-size:11.5px;height:auto">
+                          <i class="bi bi-trash3-fill"></i> حذف
+                        </button>
+                      </td>
+                    </tr>
+                  `).join("") || '<tr><td colspan="6" class="empty" style="padding:20px;text-align:center;color:var(--text-muted)">لا توجد مسارات ثابتة مخصصة حتى الآن. أضف مساراً جديداً أعلاه.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Kernel Active Routes Dropdown/Accordion -->
+          <details style="background:var(--bg-card-subtle);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer">
+            <summary style="font-size:12.5px;font-weight:800;color:var(--text-main);user-select:none;display:flex;align-items:center;gap:6px">
+              <i class="bi bi-terminal"></i> استعراض جدول توجيه الكيرنل المباشر (${kernelRoutes.length} مسار نشط في السيرفر)
+            </summary>
+            <div class="tablewrap" style="border:1px solid var(--border);border-radius:10px;margin-top:10px;max-height:180px;overflow-y:auto;background:var(--bg-card)">
+              <table class="modern-dist-table" style="font-size:11.5px">
+                <thead>
+                  <tr>
+                    <th>المسار (Destination)</th>
+                    <th>البوابة (Gateway)</th>
+                    <th>الواجهة (Dev)</th>
+                    <th>البروتوكول</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${kernelRoutes.map(kr => `
+                    <tr>
+                      <td class="mono"><bdi dir="ltr">${esc(kr.dst)}</bdi></td>
+                      <td class="mono"><bdi dir="ltr">${esc(kr.gateway || '—')}</bdi></td>
+                      <td class="mono"><bdi dir="ltr">${esc(kr.dev || '—')}</bdi></td>
+                      <td class="mono"><bdi dir="ltr">${esc(kr.protocol || '—')}</bdi></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+        </div>
+
+        <div class="quick-modal-footer" style="padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end">
+          <button type="button" class="btn-cancel" onclick="closeModal()">إغلاق</button>
+        </div>
+      </div>
+    `;
+
+    const m = modal(html);
+
+    // Form submit: Add static route
+    $("#formAddStaticRoute", m).onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = formData(e.target);
+      const submitBtn = $("#btnAddRouteSubmit", m);
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="bi bi-arrow-repeat bi-spin"></i> جاري التطبيق...';
+
+      try {
+        await api("network/routes", {
+          method: "POST",
+          body: {
+            destination: fd.destination,
+            gateway: fd.gateway,
+            interface: fd.interface,
+            description: fd.description
+          }
+        });
+        toast("تم تطبيق المسار الثابت في لينكس بنجاح");
+        closeModal();
+        openStaticRouteModal();
+      } catch (err) {
+        toast("فشل تطبيق المسار: " + err.message, true);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-plus-lg"></i> تطبيق وحفظ';
+      }
+    };
+
+    // Delete route handlers
+    m.querySelectorAll(".btn-del-route").forEach(b => {
+      b.onclick = async () => {
+        const id = +b.dataset.routeId;
+        const dst = b.dataset.routeDst;
+        if (!confirm(`هل تريد بالتأكيد حذف المسار الثابت ${dst} من لينكس؟`)) return;
+        try {
+          await api("network/routes/delete", {
+            method: "POST",
+            body: { id: id, destination: dst }
+          });
+          toast("تم حذف المسار من لينكس");
+          closeModal();
+          openStaticRouteModal();
+        } catch (err) {
+          toast("فشل حذف المسار: " + err.message, true);
+        }
+      };
+    });
+
+  } catch (err) {
+    modal(`<div class="p-4 text-center text-danger">خطأ في جلب بيانات المسارات: ${esc(err.message)}</div>`);
+  }
+};
+
+
+// Interactive Shadow / Live Mode Switcher with Confirmation
+window.openModeSwitchModal = function() {
+  const currentMode = (typeof ME !== "undefined" && ME && ME.mode) || "shadow";
+  const targetMode = currentMode === "shadow" ? "live" : "shadow";
+  const isGoingLive = targetMode === "live";
+
+  const html = `
+    <div class="quick-modal-content" style="max-width:540px">
+      <div class="quick-modal-head" style="border-bottom:1px solid var(--border);padding-bottom:14px">
+        <div class="quick-modal-icon" style="background:${isGoingLive ? 'var(--badge-green-bg)' : 'var(--badge-amber-bg)'};color:${isGoingLive ? 'var(--badge-green-text)' : 'var(--badge-amber-text)'}">
+          <i class="bi ${isGoingLive ? 'bi-broadcast-pin' : 'bi-eye-fill'}"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1.15rem;font-weight:800">${isGoingLive ? 'التحويل إلى وضع التشغيل الحي (Live Mode)' : 'الرجوع إلى وضع المراقبة (Shadow Mode)'}</h3>
+          <small style="color:var(--text-muted)">تبديل وضع تشغيل النظام والتحكم في الشبكة والمشتركين</small>
+        </div>
+      </div>
+
+      <div class="quick-modal-body" style="padding:18px 0;display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--bg-card-subtle);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11.5px;color:var(--text-muted);font-weight:700">الوضع الحالي للنظام</div>
+            <div style="font-size:13.5px;font-weight:800;color:var(--text-main);margin-top:2px">
+              ${currentMode === 'shadow' ? '👁️ وضع المراقبة (Shadow) — ADV هو المتحكم' : '⚡ وضع التشغيل الحي (Live) — FreeRADIUS هو الأساس'}
+            </div>
+          </div>
+          <i class="bi bi-arrow-left" style="font-size:18px;color:var(--text-muted)"></i>
+          <div>
+            <div style="font-size:11.5px;color:var(--text-muted);font-weight:700">الوضع المستهدف</div>
+            <div style="font-size:13.5px;font-weight:800;color:${isGoingLive ? 'var(--badge-green-text)' : 'var(--badge-amber-text)'};margin-top:2px">
+              ${isGoingLive ? '⚡ وضع التشغيل الحي (Live)' : '👁️ وضع المراقبة (Shadow)'}
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12.5px;line-height:1.6;color:var(--text-main);background:${isGoingLive ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)'};border:1px solid ${isGoingLive ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'};border-radius:12px;padding:14px">
+          ${isGoingLive ? `
+            <b style="color:var(--badge-green-text);display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <i class="bi bi-info-circle-fill"></i> ماذا يعني تفعيل وضع التشغيل الحي (Live)؟
+            </b>
+            سيتولى خادم FreeRADIUS المدمج إدارة اتصالات الراوترات ومصادقة المشتركين مباشرة، وسيتم تفعيل كافة العمليات المالية (شحن رصيد، تجديد اشتراكات، خصم، وتعديل حسابات) محلياً على هذا السيرفر بدلاً من ADV.
+          ` : `
+            <b style="color:var(--badge-amber-text);display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <i class="bi bi-info-circle-fill"></i> ماذا يعني تفعيل وضع المراقبة (Shadow)؟
+            </b>
+            سيعمل السيرفر كمرآة قراءة ومراقبة ذكية لسيرفر ADV القديم، مع تجميد العمليات المالية المباشرة محلياً لتجنب أي تعارض في الأرصدة.
+          `}
+        </div>
+      </div>
+
+      <div class="quick-modal-footer" style="padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <button type="button" class="btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button type="button" id="btnConfirmSwitchMode" class="btn-primary" style="background:${isGoingLive ? '#10b981' : '#f59e0b'};border-color:${isGoingLive ? '#059669' : '#d97706'}">
+          <i class="bi bi-power"></i> ${isGoingLive ? 'تأكيد تفعيل وضع Live الآن' : 'تأكيد تفعيل وضع Shadow الآن'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  const m = modal(html);
+  const btn = $("#btnConfirmSwitchMode", m);
+  if (btn) {
+    btn.onclick = async () => {
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat bi-spin"></i> جاري التبديل...';
+        await api("settings", { method: "PUT", body: { mode: targetMode, confirm: "نعم انقل" } });
+        toast("تم التحويل بنجاح إلى: " + (targetMode === "live" ? "وضع التشغيل الحي (Live)" : "وضع المراقبة (Shadow)"));
+        closeModal();
+        setTimeout(() => location.reload(), 800);
+      } catch (err) {
+        toast("فشل التحويل: " + err.message, true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-power"></i> إعادة المحاولة';
+      }
+    };
+  }
+};
+
 // RAD-Manager panel: one page, hash routes, same look as the old ADV panel.
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);
@@ -24,7 +303,8 @@ async function api(path, opt = {}) {
 function toast(msg, bad) { const t = $("#toast"); t.textContent = msg; t.className = "toast" + (bad ? " bad" : ""); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add("hidden"), 4000); }
 function modal(html) { $("#modalBody").innerHTML = html; $("#modal").classList.remove("hidden"); return $("#modalBody"); }
 function closeModal() { $("#modal").classList.add("hidden"); }
-document.addEventListener("click", e => { if (e.target.matches("[data-close]") || e.target.id === "modal") closeModal(); });
+document.addEventListener("click", e => { if (e.target.closest("[data-close]") || e.target.id === "modal") closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); });
 async function act(fn, okMsg) { try { const r = await fn(); if (okMsg) toast(okMsg); return r; } catch (e) { toast(e.message, true); throw e; } }
 function formData(form) { const o = {}; new FormData(form).forEach((v, k) => { o[k] = v; }); return o; }
 const statusTag = s => {
@@ -37,28 +317,27 @@ const onlineTag = s => +s.online ? '<span class="tag blue">متصل</span>' : ""
 // ---------- menu (same order as the old panel)
 const MENU = [ // same order and sub-menus as ADV's sidebar
   ["dashboard", "fa-dashboard", "لوحة التحكم"],
-  ["subscribers", "fa-users", "مشتركين", false, [
+  ["subscribers", "fa-users", "المشتركين", false, [
     ["subscribers?view=overview", "fa-th-large", "نظرة عامة"], ["subscribers", "fa-list", "قائمة المشتركين"], ["user?new=1", "fa-user-plus", "إضافة مشترك"],
-    ["online", "fa-lightbulb-o", "المشتركين المتصلين"], ["appusers", "fa-mobile", "مستخدمو التطبيق المتصلون"], ["cardusers", "fa-credit-card", "مشتركين الكارت"],
+    ["online", "fa-lightbulb-o", "المتصلين الآن"], ["appusers", "fa-mobile", "مستخدمي التطبيق"], ["cardusers", "fa-credit-card", "مشتركو الكارت"],
     ["onlinecards", "fa-credit-card", "الكروت المتصلة"]]],
-  ["profiles", "fa-gift", "العروض", false, [["profiles?view=overview", "fa-th-large", "نظرة عامة"], ["profiles", "fa-list", "قائمة العروض"],
+  ["profiles", "fa-gift", "الباقات والعروض", false, [["profiles?view=overview", "fa-th-large", "نظرة عامة"], ["profiles", "fa-list", "قائمة العروض"],
     ["profile", "fa-plus", "إضافة عرض"], ["ippool", "fa-sitemap", "IP Pool"]]],
   ["tickets", "fa-exclamation-circle", "الشكاوى", false, [["tickets?view=overview", "fa-th-large", "نظرة عامة"], ["tickets", "fa-list", "قائمة الشكاوى"]]],
-  ["managers", "fa-university", "المدراء", false, [["managers?view=overview", "fa-th-large", "نظرة عامة"], ["managers", "fa-list", "قائمة المدراء"],
-    ["onlinemgr", "fa-circle", "المدراء المتصلين"], ["managers?add=1", "fa-plus", "إضافة مدير"], ["pricing", "fa-tags", "اسعار العروض"], ["perms", "fa-key", "صلاحيات الموزعين"]]],
-  ["cards", "fa-credit-card", "كروت الشحن", false, [["cards", "fa-credit-card", "كروت الشحن"], ["cardtpl", "fa-paint-brush", "تصميم الكروت والطباعة"]]],
-  ["nas", "fa-paper-plane", "NAS"],
+  ["managers", "fa-university", "المدراء والموزعين", false, [["managers?view=overview", "fa-th-large", "نظرة عامة"], ["managers", "fa-list", "قائمة المدراء"],
+    ["onlinemgr", "fa-circle", "المدراء المتصلين"], ["managers?add=1", "fa-plus", "إضافة مدير"], ["pricing", "fa-tags", "أسعار العروض"], ["perms", "fa-key", "صلاحيات الموزعين"]]],
+  ["cards", "fa-credit-card", "كروت الشحن", false, [["cards", "fa-credit-card", "كروت الشحن"], ["cardtpl", "fa-paint-brush", "تصميم الكروت"]]],
+  ["nas", "fa-paper-plane", "أجهزة NAS"],
   ["cafe", "fa-coffee", "كروت الكافيهات"],
   ["vpn", "fa-lock", "VPN الكافيهات"],
-  ["ports", "fa-random", "توجيه البورتات"],
-  ["reports", "fa-pie-chart", "تقارير"],
+    ["reports", "fa-pie-chart", "التقارير"],
   ["smart", "fa-magic", "المزايا الذكية"],
   ["bandwidth", "fa-tachometer", "مراقبة الباندويث"],
   ["speed", "fa-bolt", "التحكم في السرعات"],
   ["charge", "fa-money", "لوحة الشحن"],
   ["cash", "fa-money", "معاملات الكاش"],
-  ["tools", "fa-wrench", "الادوات", false, [["backup", "fa-database", "نسخ إحتياطية & استرجاعها"], ["sync", "fa-google", "Google Drive / المزامنة مع ADV"], ["genadj", "fa-edit", "تعديلات عامة"],
-    ["trash", "fa-trash", "سلة المحذوفات"], ["messages", "fa-envelope", "سجل الرسائل"], ["maintenance", "fa-cogs", "صيانة النظام"], ["invoices", "fa-file-text-o", "الفواتير"], ["audit", "fa-history", "سجل العمليات"], ["admins", "fa-user-secret", "مستخدمين اللوحة"]]],
+  ["tools", "fa-wrench", "الأدوات", false, [["backup", "fa-database", "النسخ الاحتياطي"], ["sync", "fa-google", "مزامنة ADV"], ["genadj", "fa-edit", "تعديلات عامة"],
+    ["trash", "fa-trash", "سلة المحذوفات"], ["messages", "fa-envelope", "سجل الرسائل"], ["maintenance", "fa-cogs", "صيانة النظام"], ["invoices", "fa-file-text-o", "الفواتير"], ["audit", "fa-history", "سجل العمليات"], ["admins", "fa-user-secret", "مشرفي النظام"]]],
   ["settings", "fa-cog", "الإعدادات"],
 ];
 // ADV permission number each menu entry needs, for distributor logins that carry their ADV group (ME.admin.perms)
@@ -79,7 +358,7 @@ const MENU_BI = {
 };
 const menuIcon = (k, fa, sub) => {
   const b = MENU_BI[k] || (sub ? MENU_BI[k.split("?")[0]] : null);
-  return b ? `<i class="bi ${b[0]} ${b[1] || ""}"></i>` : `<i class="fa ${fa}"></i>`;
+  return b ? `<i class="bi ${b[0]} ${b[1] || ""}"></i>` : `<i class="bi bi-circle-square"></i>`;
 };
 const can = p => !ME.admin.perms || p === undefined || (p > 0 && ME.admin.perms.includes(p));
 function drawMenu() {
@@ -87,7 +366,7 @@ function drawMenu() {
   const adminKids = ["cardtpl"];
   const ok = k => can(MENU_PERM[k] ?? MENU_PERM[k.split("?")[0]]);
   $("#menu").innerHTML = MENU.filter(([k]) => (ME.admin.role === "admin" || !adminOnly.includes(k)) && ok(k)).map(([k, ic, t, soon, kids]) =>
-    `<a href="#${k}" data-k="${k}" class="${soon ? "soon" : ""}">${menuIcon(k, ic)}${t}${kids ? '<i class="fa fa-angle-down caret"></i>' : ""}</a>` +
+    `<a href="#${k}" data-k="${k}" class="${soon ? "soon" : ""}">${menuIcon(k, ic)}${t}${kids ? '<i class="bi bi-chevron-down caret"></i>' : ""}</a>` +
     (kids ? `<div class="sub" data-parent="${k}">${kids.filter(([h]) => ok(h) && (ME.admin.role === "admin" || !adminKids.includes(h))).map(([h, i2, t2]) => `<a href="#${h}" data-h="${h}">${menuIcon(h, i2, true)}${t2}</a>`).join("")}</div>` : "")).join("");
 }
 
@@ -105,9 +384,18 @@ async function boot() {
   try { ME = await api("me"); } catch (_) { showLogin(); return; }
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
   $("#who").textContent = ME.admin.full_name || ME.admin.username;
-  $("#brand").textContent = ME.company || "Stream-Net";
-  const mb = $("#modeBadge"); mb.className = "mode " + ME.mode;
-  mb.textContent = ME.mode === "shadow" ? "وضع المراقبة (Shadow) — ADV هو الشغال" : "وضع التشغيل (Live)";
+  $("#brand").innerHTML = '<span class="brand-slash">\\</span> Stream <span class="brand-sub">RADIUS</span>';
+  const mb = $("#modeBadge");
+  if (mb) {
+    mb.className = "mode-badge-interactive mode " + ME.mode;
+    mb.innerHTML = `
+      <i class="bi ${ME.mode === 'shadow' ? 'bi-eye-fill' : 'bi-lightning-charge-fill'}"></i>
+      <span>${ME.mode === "shadow" ? "وضع المراقبة (Shadow) — ADV هو الشغال" : "وضع التشغيل الحي (Live) — FreeRADIUS"}</span>
+      <span class="mode-toggle-action" title="انقر لتبديل وضع التشغيل"><i class="bi bi-arrow-left-right"></i> تبديل</span>
+    `;
+    mb.onclick = () => window.openModeSwitchModal();
+    mb.title = "انقر لتبديل وضع التشغيل (Live / Shadow)";
+  }
   if (ME.sim) { mb.className = "mode shadow"; mb.textContent = "🧪 لوحة التجربة — نسخة، مش بتكلم أي راوتر ولا ADV"; }
   drawMenu();
   [PROFILES, MANAGERS] = await Promise.all([api("profiles").catch(() => []), api("managers").catch(() => [])]);
@@ -129,12 +417,12 @@ const options = (list, sel, label = "name", none = "—") => `<option value="0">
 
 // ---------- pages
 const PAGES = {};
-PAGES.soon = async () => C('<div class="panel"><div class="empty"><i class="fa fa-wrench fa-2x"></i><br><br>الصفحة دي هتتعمل في المرحلة الجاية</div></div>');
+PAGES.soon = async () => C('<div class="panel"><div class="empty"><i class="bi bi-tools fs-2"></i><br><br>الصفحة دي هتتعمل في المرحلة الجاية</div></div>');
 
 PAGES.dashboard = async () => {
   const d = await api("dashboard");
-  const box = (cls, num, lbl, ico, link) => `<div class="box ${cls}"><div class="in"><div><div class="num big">${num}</div><div class="lbl">${lbl}</div></div><i class="fa ${ico} ico"></i></div><a class="more" href="#${link || ""}"><i class="fa fa-arrow-circle-left"></i> تفاصيل أخرى</a></div>`;
-  const inv = (title, x) => `<div class="inv"><div class="head"><i class="fa fa-refresh"></i> ${title}</div><div class="body"><i class="fa fa-money ico"></i><dl>
+  const box = (cls, num, lbl, ico, link) => `<div class="box ${cls}"><div class="in"><div><div class="num big">${num}</div><div class="lbl">${lbl}</div></div><i class="fa ${ico} ico"></i></div><a class="more" href="#${link || ""}"><i class="bi bi-arrow-left-circle-fill"></i> تفاصيل أخرى</a></div>`;
+  const inv = (title, x) => `<div class="inv"><div class="head"><i class="bi bi-arrow-repeat"></i> ${title}</div><div class="body"><i class="bi bi-cash-stack ico"></i><dl>
       <dt>إجمالي الفواتير المدفوعة</dt><dd>${fmt(x.paid)}</dd><dt>إجمالي الفواتير الغير مدفوعة</dt><dd>${fmt(x.unpaid)}</dd>
       <dt>محصلة الفواتير (العدد)</dt><dd>${fmt(x.count)}</dd><dt>محصلة الفواتير اليومية</dt><dd>${fmt(x.today)}</dd><dt>محصلة الفواتير الشهرية</dt><dd>${fmt(x.month)}</dd></dl></div></div>`;
   const online = d.mode === "shadow" ? d.adv_online : d.online;
@@ -146,7 +434,7 @@ PAGES.dashboard = async () => {
       if ((cs.year || {}).count) d.cards = cs.year.count;
     } catch (_) {}
   }
-  C(`${d.mode === "shadow" ? `<div class="alert"><b><i class="fa fa-warning"></i> وضع المراقبة!</b>النظام ده بيقرا من ADV بس ومش بيكلم أي سيرفر. آخر مزامنة: ${esc(d.last_sync || "لسه")} — الحالة: ${esc(d.sync_state)}</div>` : ""}
+  C(`${d.mode === "shadow" ? `<div class="alert"><b><i class="bi bi-exclamation-triangle-fill"></i> وضع المراقبة!</b>النظام ده بيقرا من ADV بس ومش بيكلم أي سيرفر. آخر مزامنة: ${esc(d.last_sync || "لسه")} — الحالة: ${esc(d.sync_state)}</div>` : ""}
   <div class="grid g2">${box("blue", fmt(online), "المشتركين المتصلين", "fa-lightbulb-o", "online")}${box("blue", fmt(d.subscribers), "مشتركين", "fa-users", "subscribers")}</div>
   <div class="grid g3">${box("orange", fmt(d.expiring), `مشتركين ينتهي اشتراكهم خلال ${d.expiring_days} ايام`, "fa-meh-o", "subscribers?status=expiring")}
     ${box("amber", fmt(d.expired), "المشتركين المنتهي اشتراكهم", "fa-frown-o", "subscribers?status=expired")}
@@ -188,18 +476,105 @@ function editSubscriber(s, after) {
 }
 async function openSubscriber(id, after) {
   const d = await api("subscribers/" + id), s = d.subscriber;
-  const m = modal(`<h3><i class="fa fa-user"></i> ${esc(s.username)} ${statusTag(s)} ${onlineTag(s)}</h3>
-    <div class="kv"><div>الاسم</div><div>${esc(s.firstname)} ${esc(s.lastname)}</div><div>الموبايل</div><div>${esc(s.mobile)}</div>
-      <div>الباقة</div><div>${esc(s.profile || "—")}</div><div>المدير</div><div>${esc(s.manager || "—")}</div><div>ينتهي</div><div>${esc(s.expiration || "—")}</div>
-      <div>الرصيد</div><div>${fmt(s.money)}</div><div>MAC</div><div dir="ltr">${esc(s.mac || "—")}</div><div>المصدر</div><div>${s.source === "adv" ? "منسوخ من ADV" : "محلي"}</div>
-      <div>العنوان</div><div>${esc(s.address)}</div><div>ملاحظات</div><div>${esc(s.notes)}</div></div>
-    <div class="actions"><button id="bRenew" class="green"><i class="fa fa-refresh"></i> تجديد</button><button id="bExt" class="orange"><i class="fa fa-clock-o"></i> تمديد أيام</button>
-      <button id="bEdit"><i class="fa fa-edit"></i> تعديل</button><button id="bTog" class="${+s.enabled ? "red" : "green"}">${+s.enabled ? "إيقاف" : "تفعيل"}</button></div>
-    <h3 style="margin-top:18px">الفواتير</h3><div class="tablewrap">${table(d.invoices, [["created", "التاريخ"], ["operation", "العملية"], ["amount", "المبلغ"], ["discount", "خصم"], ["paid", "مدفوع", v => +v ? "✔" : "✘"], ["period_to", "لحد"], ["created_by", "بواسطة"]])}</div>
-    <h3>الجلسات</h3><div class="tablewrap">${table(d.adv_online.length ? d.adv_online : d.sessions, d.adv_online.length ? [["nas", "NAS"], ["ip", "IP"], ["mac", "MAC"], ["since", "من"]] :
-      [["acctstarttime", "بداية"], ["acctstoptime", "نهاية"], ["nasipaddress", "NAS"], ["framedipaddress", "IP"], ["callingstationid", "MAC"]])}</div>
-    <h3>إعدادات الراديوس</h3><div class="tablewrap">${table(d.radius, [["t", "النوع"], ["attribute", "الخاصية"], ["op", ""], ["value", "القيمة"]])}</div>
-    <h3>سجل العمليات</h3><div class="tablewrap">${table(d.log, [["ts", "الوقت"], ["admin", "بواسطة"], ["action", "العملية"]])}</div>`);
+  const isOnline = +s.online === 1;
+  const isAct = +s.enabled === 1;
+
+  const html = `
+    <div class="quick-modal-content wide">
+      <div class="sub360-header">
+        <div class="sub360-user-info">
+          <div class="sub360-avatar">
+            <i class="bi ${isOnline ? 'bi-broadcast' : 'bi-person-fill'}"></i>
+          </div>
+          <div class="sub360-names">
+            <h2 style="margin:0;font-size:1.2rem;font-weight:800;display:flex;align-items:center;gap:8px">
+              ${esc(s.username)}
+              <span class="status-pill ${isOnline ? 'active' : ''}">${isOnline ? 'متصل أونلاين' : 'غير متصل'}</span>
+              <span class="status-pill ${isAct ? 'info' : 'stopped'}">${isAct ? 'حساب مفعّل' : 'معطل'}</span>
+            </h2>
+            <p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">
+              ${esc(s.firstname || '')} ${esc(s.lastname || '')} • الباقة: <b>${esc(s.profile || 'افتراضي')}</b> • المسؤول: <b>${esc(s.manager || 'الإدارة')}</b>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bento 360 KPIs -->
+      <div class="sub360-kpis-grid">
+        <div class="sub360-kpi-card">
+          <span style="font-size:11.5px;color:var(--text-muted);font-weight:700">الرصيد النقدي</span>
+          <span class="mono" style="font-size:1.15rem;font-weight:800;color:var(--accent)">${fmt(s.money)} ج.م</span>
+        </div>
+        <div class="sub360-kpi-card">
+          <span style="font-size:11.5px;color:var(--text-muted);font-weight:700">IP المعين / MAC</span>
+          <span class="mono" style="font-size:12px;font-weight:700">${esc(s.framed_ip || s.ip || 'ديناميكي')}</span>
+        </div>
+        <div class="sub360-kpi-card">
+          <span style="font-size:11.5px;color:var(--text-muted);font-weight:700">تاريخ انتهاء الاشتراك</span>
+          <span class="mono" style="font-size:12px;font-weight:700">${esc(s.expiration ? String(s.expiration).slice(0, 16) : '—')}</span>
+        </div>
+        <div class="sub360-kpi-card">
+          <span style="font-size:11.5px;color:var(--text-muted);font-weight:700">عنوان التوصيل / الهاتف</span>
+          <span style="font-size:12px;color:var(--text-main);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.mobile || s.address || '—')}</span>
+        </div>
+      </div>
+
+      <!-- Action Ribbon -->
+      <div class="quick-modal-actions-bar" style="padding:12px 20px;background:var(--bg-card-subtle);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button id="bRenew" class="btn-primary" style="padding:7px 16px;font-size:12.5px"><i class="bi bi-arrow-repeat"></i> تجديد الاشتراك</button>
+        <button id="bExt" class="btn-secondary" style="padding:7px 14px;font-size:12.5px"><i class="bi bi-clock-history"></i> تمديد أيام</button>
+        <button id="bEdit" class="btn-secondary" style="padding:7px 14px;font-size:12.5px"><i class="bi bi-pencil-square"></i> تعديل المشترك</button>
+        <button id="bTog" class="btn-secondary" style="padding:7px 14px;font-size:12.5px;color:${+s.enabled ? '#ef4444' : '#10b981'}">${+s.enabled ? 'إيقاف الحساب' : 'تفعيل الحساب'}</button>
+      </div>
+
+      <!-- Tabbed Views -->
+      <div class="sub360-tabs-nav">
+        <a class="sub360-tab active" data-s360-tab="invoices"><i class="bi bi-receipt"></i> الفواتير (${(d.invoices || []).length})</a>
+        <a class="sub360-tab" data-s360-tab="sessions"><i class="bi bi-broadcast"></i> سجل الجلسات</a>
+        <a class="sub360-tab" data-s360-tab="radius"><i class="bi bi-sliders"></i> إعدادات FreeRADIUS</a>
+        <a class="sub360-tab" data-s360-tab="audit"><i class="bi bi-clock-history"></i> سجل العمليات</a>
+      </div>
+
+      <div class="quick-modal-body" style="padding:18px 20px">
+        <div id="tabInvoices" class="s360-tab-pane">
+          <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px">
+            ${table(d.invoices, [["created", "التاريخ"], ["operation", "العملية"], ["amount", "المبلغ"], ["discount", "خصم"], ["paid", "مدفوع", v => +v ? "✔" : "✘"], ["period_to", "لحد"], ["created_by", "بواسطة"]])}
+          </div>
+        </div>
+        <div id="tabSessions" class="s360-tab-pane hidden">
+          <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px">
+            ${table(d.adv_online.length ? d.adv_online : d.sessions, d.adv_online.length ? [["nas", "NAS"], ["ip", "IP"], ["mac", "MAC"], ["since", "من"]] :
+              [["acctstarttime", "بداية"], ["acctstoptime", "نهاية"], ["nasipaddress", "NAS"], ["framedipaddress", "IP"], ["callingstationid", "MAC"]])}
+          </div>
+        </div>
+        <div id="tabRadius" class="s360-tab-pane hidden">
+          <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px">
+            ${table(d.radius, [["t", "النوع"], ["attribute", "الخاصية"], ["op", ""], ["value", "القيمة"]])}
+          </div>
+        </div>
+        <div id="tabAudit" class="s360-tab-pane hidden">
+          <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px">
+            ${table(d.log, [["ts", "الوقت"], ["admin", "بواسطة"], ["action", "العملية"]])}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const m = modal(html);
+
+  // Tab switching logic
+  document.querySelectorAll("[data-s360-tab]").forEach(t => t.onclick = () => {
+    document.querySelectorAll("[data-s360-tab]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    const target = t.dataset.s360Tab;
+    document.querySelectorAll(".s360-tab-pane").forEach(p => p.classList.add("hidden"));
+    if (target === "invoices") $("#tabInvoices")?.classList.remove("hidden");
+    if (target === "sessions") $("#tabSessions")?.classList.remove("hidden");
+    if (target === "radius") $("#tabRadius")?.classList.remove("hidden");
+    if (target === "audit") $("#tabAudit")?.classList.remove("hidden");
+  });
+
   const reload = () => { closeModal(); after && after(); };
   $("#bEdit", m).onclick = () => editSubscriber(s, after);
   $("#bTog", m).onclick = () => act(() => api(`subscribers/${s.id}/toggle`, { method: "POST" }), "تم").then(reload);
@@ -218,6 +593,7 @@ async function openSubscriber(id, after) {
     };
   };
 }
+
 function table(rows, cols) {
   if (!rows || !rows.length) return '<div class="empty">مفيش بيانات</div>';
   return `<table><tr>${cols.map(c => `<th>${c[1]}</th>`).join("")}</tr>${rows.map(r => `<tr>${cols.map(c => `<td>${c[2] ? c[2](r[c[0]], r) : esc(r[c[0]] ?? "")}</td>`).join("")}</tr>`).join("")}</table>`;
@@ -225,7 +601,7 @@ function table(rows, cols) {
 
 PAGES.profiles = async () => {
   PROFILES = await api("profiles");
-  C(`<div class="panel"><h2><i class="fa fa-tags"></i> العروض (الباقات) <span class="spacer"></span><button class="green" id="addP"><i class="fa fa-plus"></i> باقة جديدة</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-tags-fill"></i> العروض (الباقات) <span class="spacer"></span><button class="green" id="addP"><i class="bi bi-plus-lg"></i> باقة جديدة</button></h2>
     <div class="tablewrap">${table(PROFILES, [["name", "الاسم"], ["price", "السعر", v => fmt(v)], ["down_speed", "تحميل"], ["up_speed", "رفع"], ["rate_limit", "Rate-Limit"], ["days", "أيام"],
       ["quota_mb", "كوتة MB"], ["pool", "Pool"], ["users", "المشتركين"], ["id", "", (v) => `<button class="sm" data-p="${v}">تعديل</button>`]])}</div></div>`);
   const edit = p => {
@@ -250,7 +626,7 @@ PAGES.profiles = async () => {
 
 PAGES.managers = async () => {
   MANAGERS = await api("managers");
-  C(`<div class="panel"><h2><i class="fa fa-university"></i> المدراء <span class="spacer"></span><button class="green" id="addM"><i class="fa fa-plus"></i> مدير جديد</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-bank"></i> المدراء <span class="spacer"></span><button class="green" id="addM"><i class="bi bi-plus-lg"></i> مدير جديد</button></h2>
     <div class="tablewrap">${table(MANAGERS, [["username", "اليوزر"], ["full_name", "الاسم"], ["phone", "الموبايل"], ["balance", "الرصيد", (v, r) => +r.unlimited ? "غير محدود" : fmt(v)],
       ["users", "المشتركين"], ["enabled", "الحالة", v => +v ? '<span class="tag green">فعال</span>' : '<span class="tag gray">موقوف</span>'],
       ["id", "", v => `<button class="sm green" data-dep="${v}">شحن</button> <button class="sm" data-led="${v}">الحساب</button> <button class="sm gray" data-ed="${v}">تعديل</button>`]])}</div></div>`);
@@ -282,7 +658,7 @@ PAGES.managers = async () => {
 };
 
 PAGES.invoices = async () => {
-  C(`<div class="panel"><h2><i class="fa fa-money"></i> الفواتير والشحن</h2><div class="toolbar"><select id="ik"><option value="">الكل</option><option value="subscriber">المشتركين</option>
+  C(`<div class="panel"><h2><i class="bi bi-cash-stack"></i> الفواتير والشحن</h2><div class="toolbar"><select id="ik"><option value="">الكل</option><option value="subscriber">المشتركين</option>
     <option value="manager">المدراء</option><option value="card">الكروت</option></select><select id="ip"><option value="">مدفوع وغير مدفوع</option><option value="1">مدفوع</option><option value="0">غير مدفوع</option></select>
     <input type="date" id="if"><input type="date" id="it"></div><div class="tablewrap" id="itbl"></div></div>`);
   const load = async () => {
@@ -294,7 +670,7 @@ PAGES.invoices = async () => {
 };
 
 PAGES.cards = async () => {
-  C(`<div class="panel"><h2><i class="fa fa-credit-card"></i> كروت الشحن <span class="spacer"></span><button class="green" id="gen"><i class="fa fa-plus"></i> توليد كروت</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-credit-card-2-front"></i> كروت الشحن <span class="spacer"></span><button class="green" id="gen"><i class="bi bi-plus-lg"></i> توليد كروت</button></h2>
     <div class="pbody" id="cst"></div><div class="toolbar"><select id="ck"><option value="">كل الأنواع</option><option value="recharge">كروت شحن</option><option value="user">كروت مستخدمين</option></select>
     <select id="cs"><option value="">كل الحالات</option><option value="new">جديد</option><option value="used">مستخدم</option></select><input id="cq" placeholder="بحث بالكود / السلسلة"></div><div class="tablewrap" id="ctbl"></div></div>`);
   const load = async () => {
@@ -320,7 +696,7 @@ PAGES.cards = async () => {
 
 PAGES.nas = async () => {
   const rows = await api("nas");
-  C(`<div class="panel"><h2><i class="fa fa-paper-plane"></i> أجهزة NAS (السيرفرات اللي بتكلم الراديوس) <span class="spacer"></span><button class="green" id="addN"><i class="fa fa-plus"></i> إضافة</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-router-fill"></i> أجهزة NAS (السيرفرات اللي بتكلم الراديوس) <span class="spacer"></span><button class="green" id="addN"><i class="bi bi-plus-lg"></i> إضافة</button></h2>
     <div class="pbody muted">في وضع المراقبة مفيش سيرفر بيكلم النظام ده. إضافة NAS هنا مش بتغيّر أي حاجة على الميكروتيك.</div>
     <div class="tablewrap">${table(rows, [["nasname", "IP"], ["shortname", "الاسم"], ["type", "النوع"], ["description", "وصف"], ["id", "", v => `<button class="sm red" data-del="${v}">حذف</button>`]])}</div></div>`);
   $("#addN").onclick = () => {
@@ -333,7 +709,7 @@ PAGES.nas = async () => {
 
 PAGES.online = async () => {
   const r = await api("online");
-  C(`<div class="panel"><h2><i class="fa fa-tachometer"></i> المتصلين الآن</h2>
+  C(`<div class="panel"><h2><i class="bi bi-speedometer2"></i> المتصلين الآن</h2>
     <div class="pbody"><b>على الراديوس الجديد:</b> ${fmt(r.own.length)} — <b>على ADV (آخر مزامنة):</b> ${fmt(r.adv.length)}</div>
     <div class="tablewrap">${r.own.length ? table(r.own, [["username", "اليوزر"], ["nasipaddress", "NAS"], ["framedipaddress", "IP"], ["callingstationid", "MAC"], ["acctstarttime", "من"]])
       : table(r.adv, [["username", "اليوزر"], ["nas", "NAS"], ["ip", "IP"], ["mac", "MAC"], ["since", "من"]])}</div></div>`);
@@ -341,7 +717,7 @@ PAGES.online = async () => {
 
 PAGES.tickets = async () => {
   const rows = await api("tickets");
-  C(`<div class="panel"><h2><i class="fa fa-exclamation-circle"></i> الشكاوى <span class="spacer"></span><button class="green" id="addT"><i class="fa fa-plus"></i> شكوى جديدة</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-exclamation-circle-fill"></i> الشكاوى <span class="spacer"></span><button class="green" id="addT"><i class="bi bi-plus-lg"></i> شكوى جديدة</button></h2>
     <div class="tablewrap">${table(rows, [["id", "#"], ["subject", "الموضوع"], ["username", "المشترك"], ["status", "الحالة"], ["created", "التاريخ"], ["created_by", "بواسطة"],
       ["id", "", v => `<button class="sm" data-t="${v}">فتح</button>`]])}</div></div>`);
   $("#addT").onclick = () => {
@@ -359,7 +735,7 @@ PAGES.tickets = async () => {
 };
 
 PAGES.reports = async () => {
-  C(`<div class="panel"><h2><i class="fa fa-pie-chart"></i> تقارير المبيعات</h2><div class="toolbar"><input type="date" id="rf"><input type="date" id="rt">
+  C(`<div class="panel"><h2><i class="bi bi-pie-chart-fill"></i> تقارير المبيعات</h2><div class="toolbar"><input type="date" id="rf"><input type="date" id="rt">
     <select id="rg"><option value="day">باليوم</option><option value="month">بالشهر</option><option value="manager">بالمدير</option><option value="profile">بالباقة</option><option value="kind">بالنوع</option></select></div>
     <div class="tablewrap" id="rtbl"></div></div>`);
   const load = async () => {
@@ -374,7 +750,7 @@ PAGES.reports = async () => {
 PAGES.sync = async () => {
   const d = await api("sync");
   const L = d.local;
-  C(`<div class="panel"><h2><i class="fa fa-refresh"></i> المزامنة مع ADV (قراءة بس) <span class="spacer"></span>${ME.admin.role === "admin" ? '<button class="green" id="runS"><i class="fa fa-refresh"></i> زامن دلوقتي</button>' : ""}</h2>
+  C(`<div class="panel"><h2><i class="bi bi-arrow-repeat"></i> المزامنة مع ADV (قراءة بس) <span class="spacer"></span>${ME.admin.role === "admin" ? '<button class="green" id="runS"><i class="bi bi-arrow-repeat"></i> زامن دلوقتي</button>' : ""}</h2>
     <div class="pbody">${d.cred_error ? `<div class="alert" style="background:var(--red)">${esc(d.cred_error)}</div>` : ""}
     <div class="kv"><div>الحالة</div><div>${esc(d.state)}</div><div>آخر مزامنة</div><div>${esc(d.last || "لسه")}</div>
       <div>المشتركين عندنا</div><div>${fmt(L.subscribers)} (منهم من ADV: ${fmt(L.from_adv)})</div><div>الباقات</div><div>${fmt(L.profiles)}</div><div>المدراء</div><div>${fmt(L.managers)}</div>
@@ -397,8 +773,8 @@ async function quotaCmpBox() {
   const pc = v => (v > 0 ? "+" : "") + (v || 0) + "%";
   const box = document.createElement("div");
   box.className = "panel";
-  box.innerHTML = `<h2><i class="fa fa-balance-scale"></i> مقارنة عدّ الجيجات مع ADV <span class="spacer"></span>
-    <button class="green" id="runQc" ${st.running ? "disabled" : ""}><i class="fa fa-play"></i> ${st.running ? esc(st.state || "شغالة...") : "قيس 60 مشترك لمدة ساعة"}</button></h2>
+  box.innerHTML = `<h2><i class="bi bi-scale"></i> مقارنة عدّ الجيجات مع ADV <span class="spacer"></span>
+    <button class="green" id="runQc" ${st.running ? "disabled" : ""}><i class="bi bi-play-fill"></i> ${st.running ? esc(st.state || "شغالة...") : "قيس 60 مشترك لمدة ساعة"}</button></h2>
     <div class="pbody"><div class="kv"><div>آخر قياس</div><div>${esc(L.ts || "لسه")}${L.minutes ? ` (${L.minutes} دقيقة)` : ""}</div><div>مشتركين اتقاسوا</div><div>${fmt(L.users || 0)}${L.skipped ? ` (اتشال ${fmt(L.skipped)} اتجدّدوا في النص)` : ""}</div>
       <div>ADV خصم</div><div>${mb(L.adv_mb)}</div>
       <div>إحنا عدّينا تحميل</div><div>${mb(L.down_mb)} (الفرق ${pc(L.vs_down_pc)})</div>
@@ -414,8 +790,8 @@ async function verifyBox() {
   const L = st.last || {};
   const box = document.createElement("div");
   box.className = "panel";
-  box.innerHTML = `<h2><i class="fa fa-check-square-o"></i> مطابقة مع ADV <span class="spacer"></span>
-    <button class="green" id="runVer" ${st.running ? "disabled" : ""}><i class="fa fa-play"></i> ${st.running ? "شغالة..." : "طابق 100 مشترك دلوقتي"}</button></h2>
+  box.innerHTML = `<h2><i class="bi bi-check2-square"></i> مطابقة مع ADV <span class="spacer"></span>
+    <button class="green" id="runVer" ${st.running ? "disabled" : ""}><i class="bi bi-play-fill"></i> ${st.running ? "شغالة..." : "طابق 100 مشترك دلوقتي"}</button></h2>
     <div class="pbody"><div class="kv"><div>آخر مطابقة</div><div>${esc(L.ts || "لسه")}</div><div>اتفحص</div><div>${fmt(L.checked || 0)} مشترك</div>
       <div>متطابق 100%</div><div>${fmt(L.identical || 0)}</div><div>فيه اختلاف</div><div>${fmt(L.different || 0)}${L.fixed ? ` (اتصلّح منهم ${fmt(L.fixed)})` : ""}</div></div>
     ${(L.diffs || []).length ? `<div class="tablewrap">${table(L.diffs, [["user", "المشترك"], ["field", "الحقل"], ["adv", "في ADV"], ["ours", "عندنا"]])}</div>` : ""}</div>`;
@@ -429,8 +805,8 @@ async function archiveBox() {
   if (!st) return;
   const box = document.createElement("div");
   box.className = "panel";
-  box.innerHTML = `<h2><i class="fa fa-archive"></i> أرشيف ADV (سجل العمليات + الجلسات القديمة) <span class="spacer"></span>
-    <button class="orange" id="runArc" ${st.running ? "disabled" : ""}><i class="fa fa-download"></i> ${st.running ? "شغالة..." : "ابدأ الأرشفة"}</button></h2>
+  box.innerHTML = `<h2><i class="bi bi-archive-fill"></i> أرشيف ADV (سجل العمليات + الجلسات القديمة) <span class="spacer"></span>
+    <button class="orange" id="runArc" ${st.running ? "disabled" : ""}><i class="bi bi-download"></i> ${st.running ? "شغالة..." : "ابدأ الأرشفة"}</button></h2>
     <div class="pbody"><div class="kv"><div>الحالة</div><div>${esc(st.state || "لسه ما اتعملتش")}</div><div>عمليات محفوظة</div><div>${fmt(st.activity)}</div><div>جلسات محفوظة</div><div>${fmt(st.sessions)}</div></div>
     <p class="muted">بتقرا بس من ADV، طلب واحد لكل مشترك (حوالي ${fmt(5200)} طلب على نص ساعة تقريبا). سجل العمليات الجديد بيتحفظ لوحده كل 20 ثانية.</p></div>`;
   $("#content").appendChild(box);
@@ -443,13 +819,210 @@ async function archiveBox() {
 }
 
 PAGES.audit = async () => {
-  const rows = await api("audit");
-  C(`<div class="panel"><h2><i class="fa fa-history"></i> سجل العمليات (ما يتمسحش ولا يتعدل)</h2><div class="tablewrap">${table(rows, [["ts", "الوقت"], ["admin", "بواسطة"], ["action", "العملية"], ["target", "على"], ["details", "تفاصيل", v => `<span class="muted" dir="ltr">${esc(String(v || "").slice(0, 120))}</span>`], ["ip", "IP"]])}</div></div>`);
+  let rows = [];
+  let lastLoadedTime = Date.now();
+  const st = { q: "", act: "", page: 1, size: 25 };
+
+  C(`<div class="adv-card">
+    <div class="adv-head">
+      <span><i class="bi bi-clock-history text-primary"></i> سجل الرقابة والعمليات التشغيلية (NOC Audit Trail) <small id="audFound"></small></span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="icon-btn" id="audReload" title="تحديث فوري"><i class="bi bi-arrow-repeat"></i></button>
+      </div>
+    </div>
+    <div class="adv-body">
+      <!-- Telemetry Bar -->
+      <div class="noc-telemetry-bar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="stale-badge stale-fresh" id="audBadge">
+            <span class="stale-dot"></span>
+            <span>آخر استعلام حي: <b id="audSec">منذ لحظات</b></span>
+          </span>
+          <span class="mini gray"><i class="bi bi-shield-check"></i> سجل غير قابل للتعديل أو الحذف (Tamper-Proof)</span>
+        </div>
+        <div class="adv-tbtns">
+          <button id="audCsv" title="تصدير CSV"><i class="bi bi-file-text-o"></i> CSV</button>
+          <button onclick="window.print()" title="طباعة"><i class="bi bi-print"></i> طباعة</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="adv-row" style="margin-bottom:12px">
+        <div class="adv-f adv-grow">
+          <label>بحث في السجل (المشغّل / المشترك المستهدف / عنوان IP / التفاصيل)</label>
+          <div class="adv-inline">
+            <span class="adv-cal"><i class="bi bi-funnel-fill"></i></span>
+            <input id="audQ" placeholder="ابحث باسم المشغل أو المشترك أو IP...">
+          </div>
+        </div>
+        <div class="adv-f">
+          <label>نوع العملية (Action)</label>
+          <select id="audAct">
+            <option value="">كل العمليات</option>
+            <option value="login">تسجيل الدخول</option>
+            <option value="login_failed">فشل تسجيل الدخول</option>
+            <option value="disconnect">فصل الجلسات (PoD)</option>
+            <option value="subscriber">إدارة المشتركين</option>
+            <option value="toggle">تغيير الحالة</option>
+            <option value="nas">إدارة الـ NAS</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="tablewrap">
+        <table class="adv-table" id="audT"></table>
+      </div>
+
+      <div class="adv-tools">
+        <div id="audInfo" class="muted"></div>
+        <div class="adv-pager" id="audPg"></div>
+      </div>
+    </div>
+  </div>`);
+
+  const actionBadge = a => {
+    a = String(a || "");
+    if (a.includes("fail")) return `<span class="tag red"><i class="bi bi-x-lg-circle"></i> ${esc(a)}</span>`;
+    if (a.includes("login")) return `<span class="tag green"><i class="bi bi-sign-in"></i> ${esc(a)}</span>`;
+    if (a.includes("disconnect")) return `<span class="tag red"><i class="bi bi-plug-fill"></i> ${esc(a)}</span>`;
+    if (a.includes("delete")) return `<span class="tag red"><i class="bi bi-trash3-fill"></i> ${esc(a)}</span>`;
+    if (a.includes("create")) return `<span class="tag green"><i class="bi bi-plus-lg"></i> ${esc(a)}</span>`;
+    return `<span class="tag gray">${esc(a)}</span>`;
+  };
+
+  const draw = () => {
+    const q = st.q.toLowerCase();
+    const actFilter = st.act.toLowerCase();
+    const filtered = rows.filter(r => {
+      const matchQ = !q || (String(r.admin || "") + " " + String(r.action || "") + " " + String(r.target || "") + " " + String(r.ip || "") + " " + String(r.details || "")).toLowerCase().includes(q);
+      const matchAct = !actFilter || String(r.action || "").toLowerCase().includes(actFilter);
+      return matchQ && matchAct;
+    });
+
+    const pages = Math.max(1, Math.ceil(filtered.length / st.size));
+    st.page = Math.min(st.page, pages);
+    const view = filtered.slice((st.page - 1) * st.size, st.page * st.size);
+
+    $("#audFound").textContent = `( تم إيجاد ${fmt(filtered.length)} من أصل ${fmt(rows.length)} عملية )`;
+    $("#audInfo").textContent = `إظهار ${filtered.length ? (st.page - 1) * st.size + 1 : 0} إلى ${Math.min(filtered.length, st.page * st.size)} من أصل ${fmt(filtered.length)} مُدخل`;
+
+    if (!view.length) {
+      $("#audT").innerHTML = `
+        <thead><tr><th>#</th><th>الوقت</th><th>المشغّل</th><th>العملية</th><th>الهدف</th><th>التفاصيل</th><th>عنوان IP</th></tr></thead>
+        <tbody><tr><td colspan="7">
+          <div class="noc-empty-state">
+            <i class="bi bi-search-minus noc-empty-icon" style="opacity:0.4"></i>
+            <h3>لا توجد عمليات تطابق البحث</h3>
+            <p>لا توجد سجلات مطابقة لنص البحث أو الفلتر المحدد.</p>
+            <button class="noc-btn-reset" id="btnAudReset"><i class="bi bi-undo"></i> إعادة تعيين الفلتر</button>
+          </div>
+        </td></tr></tbody>`;
+      const btnReset = $("#btnAudReset");
+      if (btnReset) btnReset.onclick = () => { st.q = ""; st.act = ""; $("#audQ").value = ""; $("#audAct").value = ""; draw(); };
+      return;
+    }
+
+    $("#audT").innerHTML = `
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>وقت العملية (Timestamp)</th>
+          <th>بواسطة المشغّل</th>
+          <th>نوع العملية</th>
+          <th>المشترك / الهدف</th>
+          <th>التفاصيل الفنية (Details)</th>
+          <th>عنوان IP المشغّل</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${view.map((r, i) => `
+          <tr>
+            <td class="c-n" style="background:#475569;color:#fff">${(st.page - 1) * st.size + i + 1}</td>
+            <td><bdi dir="ltr" class="tech-val">${advDate(r.ts)}</bdi></td>
+            <td><b>${esc(r.admin || "النظام")}</b></td>
+            <td>${actionBadge(r.action)}</td>
+            <td><b><bdi dir="ltr" class="tech-val">${esc(r.target || "—")}</bdi></b></td>
+            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">
+              <span class="tech-val" style="font-size:12px;color:#475569"><bdi dir="ltr">${esc(String(r.details || "—").slice(0, 140))}</bdi></span>
+            </td>
+            <td><bdi dir="ltr" class="tech-val">${esc(r.ip || "—")}</bdi></td>
+          </tr>`).join("")}
+      </tbody>`;
+
+    // Pager
+    const p = st.page;
+    const nums = [...new Set([1, pages, p - 1, p, p + 1, p + 2].filter(n => n >= 1 && n <= pages))].sort((a, b) => a - b);
+    let html = `<a class="${p <= 1 ? "dis" : ""}" data-apg="${p - 1}">السابقة</a>`, last = 0;
+    nums.forEach(n => {
+      if (n - last > 1) html += "<span>…</span>";
+      html += `<a class="${n === p ? "cur" : ""}" data-apg="${n}">${n}</a>`;
+      last = n;
+    });
+    html += `<a class="${p >= pages ? "dis" : ""}" data-apg="${p + 1}">التالية</a>`;
+    $("#audPg").innerHTML = html;
+    $("#audPg").querySelectorAll("[data-apg]").forEach(a => {
+      a.onclick = () => {
+        const n = +a.dataset.apg;
+        if (n >= 1 && n <= pages && n !== p) {
+          st.page = n;
+          draw();
+        }
+      };
+    });
+  };
+
+  const load = async () => {
+    // Skeleton
+    const rowsHtml = Array.from({ length: 6 }).map(() =>
+      `<tr class="skeleton-row">${Array.from({ length: 7 }).map(() => '<td><div class="skeleton-cell"></div></td>').join("")}</tr>`
+    ).join("");
+    $("#audT").innerHTML = `<thead><tr><th>#</th><th>الوقت</th><th>المشغّل</th><th>العملية</th><th>الهدف</th><th>التفاصيل</th><th>IP</th></tr></thead><tbody>${rowsHtml}</tbody>`;
+
+    try {
+      rows = await api("audit");
+      lastLoadedTime = Date.now();
+      draw();
+    } catch (err) {
+      $("#audT").innerHTML = `
+        <thead><tr><th>#</th><th>الوقت</th><th>المشغّل</th><th>العملية</th><th>الحالة</th></tr></thead>
+        <tbody><tr><td colspan="5">
+          <div class="noc-error-state">
+            <i class="bi bi-exclamation-triangle-fill noc-error-icon"></i>
+            <h3>تعذر استرجاع سجل العمليات</h3>
+            <p>${esc(err.message || "فشل الاتصال بقاعدة البيانات")}</p>
+            <button class="noc-btn-retry" id="audRetry"><i class="bi bi-arrow-repeat"></i> إعادة المحاولة</button>
+          </div>
+        </td></tr></tbody>`;
+      const btnRetry = $("#audRetry");
+      if (btnRetry) btnRetry.onclick = () => load();
+    }
+  };
+
+  $("#audReload").onclick = () => load();
+  $("#audAct").onchange = e => { st.act = e.target.value; st.page = 1; draw(); };
+  let tq;
+  $("#audQ").oninput = e => {
+    clearTimeout(tq);
+    tq = setTimeout(() => {
+      st.q = e.target.value.trim();
+      st.page = 1;
+      draw();
+    }, 300);
+  };
+
+  $("#audCsv").onclick = () => {
+    if (!rows.length) return;
+    downloadCSV("audit_log", ["#", "الوقت", "المشغل", "العملية", "الهدف", "التفاصيل", "IP"],
+      rows.map((r, i) => [i + 1, r.ts, r.admin, r.action, r.target, r.details, r.ip]));
+  };
+
+  load();
 };
 
 PAGES.admins = async () => {
   const rows = await api("admins");
-  C(`<div class="panel"><h2><i class="fa fa-user-secret"></i> مستخدمين اللوحة <span class="spacer"></span><button class="green" id="addA"><i class="fa fa-plus"></i> مستخدم جديد</button></h2>
+  C(`<div class="panel"><h2><i class="bi bi-person-fill-secret"></i> مستخدمين اللوحة <span class="spacer"></span><button class="green" id="addA"><i class="bi bi-plus-lg"></i> مستخدم جديد</button></h2>
     <div class="tablewrap">${table(rows, [["username", "اليوزر"], ["full_name", "الاسم"], ["role", "الصلاحية", v => ({ admin: "مدير النظام", manager: "موزع", viewer: "مشاهدة بس" }[v] || v)],
       ["enabled", "الحالة", v => +v ? "فعال" : "موقوف"], ["id", "", v => `<button class="sm" data-a="${v}">تعديل</button>`]])}</div>
     <div class="pbody"><button class="gray" id="myPw">تغيير كلمة المرور بتاعتي</button></div></div>`);
@@ -478,7 +1051,7 @@ PAGES.admins = async () => {
 PAGES.settings = async () => {
   const d = await api("settings"), S = Object.fromEntries(d.settings.map(x => [x.k, x.v]));
   const f = (k, label, help = "") => `<label>${label}<input name="${k}" value="${esc(S[k])}" dir="auto">${help ? `<small class="muted">${help}</small>` : ""}</label>`;
-  C(`<div class="panel"><h2><i class="fa fa-cog"></i> الإعدادات</h2><div class="pbody"><form class="form" id="sf">
+  C(`<div class="panel"><h2><i class="bi bi-cog"></i> الإعدادات</h2><div class="pbody"><form class="form" id="sf">
     ${f("company", "اسم الشركة")}${f("currency", "العملة")}
     ${f("expired_pool", "Pool المنتهي اشتراكهم", "زي END على السيرفرات")}${f("quota_pool", "Pool اللي خلصت باقتهم", "زي LIMIT")}
     ${f("expired_rate", "سرعة المنتهي (اختياري)", "مثلا 256k/256k")}${f("expiring_days", "ينتهي قريب = خلال كام يوم")}
@@ -486,7 +1059,7 @@ PAGES.settings = async () => {
     <label>ربط اليوزر بالـ MAC<select name="mac_bind"><option value="0" ${S.mac_bind !== "1" ? "selected" : ""}>مقفول</option><option value="1" ${S.mac_bind === "1" ? "selected" : ""}>مفعّل</option></select></label>
     <label>كلمة سر PPPoE الموحدة<input value="${d.default_password_set ? "متسجلة في ملف الإعدادات على السيرفر" : "مش متسجلة!"}" readonly></label>
     <div class="actions full"><button class="green">حفظ</button></div></form></div></div>
-    <div class="panel"><h2><i class="fa fa-exchange"></i> وضع التشغيل</h2><div class="pbody">
+    <div class="panel"><h2><i class="bi bi-exchange"></i> وضع التشغيل</h2><div class="pbody">
       <p>الوضع الحالي: <b>${S.mode === "shadow" ? "مراقبة (Shadow) — ADV هو الشغال، والنظام ده بيقرا بس" : "تشغيل (Live)"}</b></p>
       <p class="muted">التحويل لـ Live بيفتح التجديد والفلوس هنا، ومش بيغيّر أي حاجة على السيرفرات. ربط السيرفرات بالراديوس الجديد خطوة منفصلة بموافقة المالك.</p>
       <button class="${S.mode === "shadow" ? "red" : "orange"}" id="modeBtn">${S.mode === "shadow" ? "حوّل لـ Live" : "رجّع لـ Shadow"}</button></div></div>`);

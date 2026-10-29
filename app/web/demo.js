@@ -166,9 +166,9 @@
   let SPEED = { state: "off", mode: "off", until: "", from: "02:00", to: "08:00", type: "multiply", value: 2 };
   const SETTINGS = { company: "Stream-Net", currency: "EGP", mode: MODE, expired_pool: "END", quota_pool: "LIMIT", expiring_days: "3", sync_minutes: "15", fast_seconds: "20", default_days: "30",
     mac_bind: "0", wa_number: phone(1), wa_gap: "8", goip_enabled: "0", goip_ip: "192.0.2.50", goip_line: "1", loyalty_on: "1", loyalty_for: "subscriber", com_phone: phone(2), address: "عنوان تجريبي",
-    portal_on: "1", card_templates: JSON.stringify([{ id: "t1", name: "قالب تجربة", w: 85, h: 54, cols: 3, rows: 7, gap: 2, bg: "", color: "#4f46e5",
+    portal_on: "1", card_templates: JSON.stringify([{ id: "t1", name: "قالب تجربة", w: 85, h: 54, cols: 3, rows: 7, gap: 2, bg: "", color: "#0055ff",
       f: { code: { x: 50, y: 48, s: 18, c: "#000000", on: true }, price: { x: 85, y: 15, s: 12, c: "#1e3a8a", on: true }, profile: { x: 18, y: 15, s: 11, c: "#1e3a8a", on: true },
-        series: { x: 18, y: 88, s: 9, c: "#475569", on: true }, company: { x: 50, y: 15, s: 13, c: "#0f172a", on: false } }, qr: { on: true, x: 85, y: 70, s: 16 } }]) };
+        series: { x: 18, y: 88, s: 9, c: "#475569", on: true }, company: { x: 50, y: 15, s: 13, c: "#ffffff", on: false } }, qr: { on: true, x: 85, y: 70, s: 16 } }]) };
   let nextId = 5000;
 
   // ---------- derived values

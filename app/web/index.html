@@ -1,23 +1,30 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stream-Net | الرئيسية</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<title>Stream RADIUS // NOC Core</title>
+<script>
+(function() {
+  var t = localStorage.getItem('stream_theme') || 'dark';
+  if (t === 'dark') document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+})();
+</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="app.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="app.css?v=noc_3_12">
 </head>
 <body>
 <div id="login" class="login hidden">
   <form id="loginForm" class="login-box">
-    <h1 id="loginCompany">Stream-Net</h1>
-    <p>نظام إدارة المشتركين</p>
+    <div class="login-brand"><span class="brand-slash">\</span> Stream <span class="brand-sub">RADIUS</span></div>
+    <p>نظام إدارة المشتركين وشبكات الـ NOC</p>
     <input name="username" placeholder="اسم المستخدم" autocomplete="username" required>
     <input name="password" type="password" placeholder="كلمة المرور" autocomplete="current-password" required>
-    <button>دخول</button>
+    <button class="spek-blue-btn">دخول للنظام ←</button>
     <div id="loginErr" class="err"></div>
     <a class="lang-link" data-noi18n onclick="setLang(LANG === 'en' ? 'ar' : 'en')">English / عربي</a>
   </form>
@@ -25,22 +32,76 @@
 
 <div id="app" class="hidden">
   <aside id="sidebar">
-    <div class="brand" id="brand">Stream-Net</div>
+    <div class="brand" id="brand"><span class="brand-slash">\</span> Stream <span class="brand-sub">RADIUS</span></div>
     <nav id="menu"></nav>
   </aside>
   <header id="topbar">
-    <button id="burger" class="icon-btn" title="القائمة"><i class="fa fa-bars"></i></button>
-    <span id="modeBadge" class="mode"></span>
+    <button id="burger" class="icon-btn" title="القائمة"><i class="bi bi-list"></i></button>
+    
+    <div class="topbar-engine-capsules">
+      <span id="modeBadge" class="mode"></span>
+    </div>
+
     <span class="spacer"></span>
-    <button id="langBtn" class="icon-btn lang-btn" title="Language" data-noi18n onclick="setLang(LANG === 'en' ? 'ar' : 'en')"></button>
-    <span class="user"><i class="fa fa-user-circle"></i> <span id="who"></span></span>
-    <button id="logout" class="icon-btn" title="خروج"><i class="fa fa-sign-out"></i></button>
+
+    <!-- Centered Global Quick Subscriber Search -->
+    <div class="topbar-search-center">
+      <div class="topbar-search-box" id="topbarSearchContainer">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" id="topbarSearchInput" placeholder="بحث فوري عن مشترك (اسم، رقم، آيبي، ماك)..." autocomplete="off">
+        <span class="search-kbd-tag" title="اختصار البحث">⌘K</span>
+        <button id="topbarSearchClear" class="search-clear-btn hidden" onclick="clearTopbarSearch()" title="مسح">&times;</button>
+        <div id="topbarSearchResults" class="search-results-dropdown hidden"></div>
+      </div>
+    </div>
+
+    <span class="spacer"></span>
+
+        <!-- Linux Static Route Manager Button -->
+    <button id="btnTopStaticRoute" class="topbar-action-pill" onclick="openStaticRouteModal()" title="إدارة المسارات الثابتة في لينكس (Linux Static Routes)">
+      <i class="bi bi-signpost-split-fill"></i>
+      <span>Static Route</span>
+    </button>
+    <!-- Design #3 Pure Minimal Dual Light/Dark Theme Switcher Pill -->
+    <div class="theme-toggle-pill" id="themeTogglePill" onclick="toggleTheme()" title="تبديل الوضع (نهاري / ليلي)">
+      <span class="theme-btn-option theme-opt-light"><i class="bi bi-sun-fill" style="color:#f59e0b"></i> نهاري</span>
+      <span class="theme-btn-option theme-opt-dark"><i class="bi bi-moon-stars-fill"></i> ليلي</span>
+    </div>
+
+    <!-- Language Switcher Pill -->
+    <div class="lang-toggle-pill" id="langBtn" onclick="setLang(LANG === 'en' ? 'ar' : 'en')" title="تبديل اللغة / Switch Language" data-noi18n>
+      <i class="bi bi-translate lang-ico"></i>
+      <span id="langTxt">English</span>
+    </div>
+
+    <span class="user"><i class="bi bi-person-fill"></i> <span id="who"></span></span>
+    <button id="logout" class="icon-btn logout-btn" title="خروج"><i class="bi bi-box-arrow-left"></i></button>
   </header>
   <main id="content"></main>
 </div>
 
-<div id="modal" class="modal hidden"><div class="modal-box"><button class="modal-x" data-close>&times;</button><div id="modalBody"></div></div></div>
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <button class="modal-x" data-close title="إغلاق"><i class="bi bi-x-lg"></i></button>
+    <div id="modalBody"></div>
+  </div>
+</div>
 <div id="toast" class="toast hidden"></div>
+<script>
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('stream_theme', 'light');
+  } else {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('stream_theme', 'dark');
+  }
+}
+function toggleTheme() {
+  var isDark = document.documentElement.classList.contains('dark');
+  applyTheme(isDark ? 'light' : 'dark');
+}
+</script>
 <script src="i18n-en.js"></script>
 <script src="i18n.js"></script>
 <script src="demo.js"></script><!-- demo mode (file:// or ?demo or no server): fake /api answers; must load before app.js, which calls boot() at once -->
@@ -55,7 +116,7 @@
 <script src="reports.js"></script>
 <script src="online.js"></script>
 <script src="tickets.js"></script>
-<script src="dashboard.js"></script>
+<script src="dashboard.js?v=noc_3_12"></script>
 <script src="charge.js"></script>
 <script src="messaging.js"></script>
 <script src="settings2.js"></script>
@@ -72,6 +133,7 @@
 <script src="vpn.js"></script>
 <script src="cafe.js"></script>
 <script src="cash.js"></script>
+<script src="quickmodals.js?v=noc_3_12"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </body>
 </html>

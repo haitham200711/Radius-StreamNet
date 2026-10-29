@@ -10,7 +10,7 @@ PAGES.tickets = async () => {
     rows = (await api("tickets")).map(t => ({ id: t.id, username: t.username, subject: t.subject, status: t.status, num: t.id, last: t.created_by, replies: 0, local: 1 }));
   }
   const stAr = s => ({ open: "مفتوح", closed: "مغلق", pending: "معلق", sloved: "تم الحل", solved: "تم الحل", "0": "مفتوح", "1": "مغلق" })[String(s)] || s;
-  C(`<div class="adv-card"><div class="adv-head"><span><i class="fa fa-exclamation-circle"></i> الشكاوى</span><button class="icon-btn" id="reload"><i class="fa fa-refresh"></i></button></div>
+  C(`<div class="adv-card"><div class="adv-head"><span><i class="bi bi-exclamation-circle-fill"></i> الشكاوى</span><button class="icon-btn" id="reload"><i class="bi bi-arrow-repeat"></i></button></div>
     <div class="adv-body"><div class="adv-actions" style="margin:0 0 12px">
       <button class="btn-pale" id="tView">عرض</button><button class="btn-pale soon">حذف</button><button class="btn-pale" id="tStatus">تغيير الحالة</button><button class="btn-emerald" id="tNew">فتح للعميل</button></div>
       <div class="tablewrap"><table class="adv-table"><thead><tr><th class="c-chk"></th><th>#</th><th>اسم المستخدم</th><th>العنوان</th><th>الحالة</th><th>رقم</th><th>آخر رد بواسطة</th><th>عدد الردود</th></tr></thead>

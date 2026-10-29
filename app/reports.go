@@ -36,7 +36,9 @@ var localReports = map[string]struct {
 	"traffic_daily": {false, `SELECT DATE_FORMAT(d.day,'%Y-%m-%d') AS day, COUNT(DISTINCT d.username) AS users,
 		ROUND(SUM(d.bytes_out)/1073741824,2) AS down_gb, ROUND(SUM(d.bytes_in)/1073741824,2) AS up_gb, ROUND(SUM(d.bytes_in+d.bytes_out)/1073741824,2) AS total_gb
 		FROM rm_daily_usage d JOIN rm_subscribers i ON i.username=d.username WHERE d.day>=? AND d.day<=? SCOPE GROUP BY d.day ORDER BY d.day DESC`},
-	// our RADIUS's own records (live mode): every session with its end reason, and the raw accounting table
+	// our RADIUS's own records (live mode): authentication attempts, sessions, and accounting
+	"radius_auth": {true, `SELECT id, authdate AS t_date, username, reply AS status, '••••••••' AS pass, COALESCE(class,'—') AS more_details
+		FROM radpostauth WHERE authdate>=? AND authdate<?+INTERVAL 1 DAY ORDER BY id DESC LIMIT 5000`},
 	"radius_sessions": {true, `SELECT username, nasipaddress, framedipaddress, callingstationid, acctstarttime, acctstoptime, SEC_TO_TIME(acctsessiontime) AS duration,
 		ROUND(acctoutputoctets/1073741824,3) AS down_gb, ROUND(acctinputoctets/1073741824,3) AS up_gb, acctterminatecause
 		FROM radacct WHERE acctstarttime>=? AND acctstarttime<?+INTERVAL 1 DAY ORDER BY radacctid DESC LIMIT 5000`},

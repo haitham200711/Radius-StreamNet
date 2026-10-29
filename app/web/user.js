@@ -15,7 +15,7 @@ PAGES.user = async () => {
   const sw = (name, on, label) => `<div class="adv-sw"><span>${label}</span><label class="onoff"><input type="checkbox" name="${name}" ${on ? "checked" : ""}><b data-on="ON" data-off="OFF"></b></label></div>`;
   const expVal = (s.expiration || "").replace(" ", "T").slice(0, 16);
   C(`<div class="adv-card box-info">
-    <div class="adv-head"><span><i class="fa fa-user"></i> ${creating ? (copyOf ? "تكرار مشترك" : "إضافة مشترك") : `تعديل المشترك (${esc(s.username)})`}</span>
+    <div class="adv-head"><span><i class="bi bi-person-fill"></i> ${creating ? (copyOf ? "تكرار مشترك" : "إضافة مشترك") : `تعديل المشترك (${esc(s.username)})`}</span>
       <span class="head-tags">${+s.online ? '<span class="tag blue">متصل</span>' : ""} ${s.source === "adv" ? '<span class="tag gray">منسوخ من ADV</span>' : ""}</span></div>
     <div class="adv-body">
       <ul class="adv-tabs"><li class="on" data-tab="info">معلومات</li><li data-tab="prices">الأسعار الخاصة</li><li data-tab="history">الفواتير والسجل</li></ul>
@@ -23,62 +23,54 @@ PAGES.user = async () => {
         <h3 class="form-section">معلومات الحساب ${sw("Enabled", +s.enabled, "مفعّل")} ${sw("AutoRenew", +s.auto_renew, "تجديد تلقائى")}</h3>
         <div class="g12">
           ${f(6, "اسم المستخدم", inp("username", esc(s.username), creating ? 'required dir="ltr" autocomplete="off"' : "readonly"))}
+          ${f(6, "الباقة", `<select name="ProfileID">${options(PROFILES, s.profile_id)}</select>`)}
           ${f(6, "كَلمة المرور", '<input name="Password" type="password" autocomplete="new-password" placeholder="سيبها فاضية لو مش هتغيرها">')}
           ${f(6, "تأكيد كَلمة المرور", '<input name="Password2" type="password" autocomplete="new-password">')}
-          ${f(3, "سرعة التحميل (Kbit/s)", inp("x_down_speed", v("down_speed"), 'dir="ltr"'))}
-          ${f(3, "سرعة الرفع (Kbit/s)", inp("x_up_speed", v("up_speed"), 'dir="ltr"'))}
-          ${f(2, "سرعة التحميل (Kbit/s)", inp("x_down_speed_temp", v("down_speed_temp"), 'dir="ltr" title="سرعة مؤقتة"'))}
-          ${f(2, "سرعة الرفع (Kbit/s)", inp("x_up_speed_temp", v("up_speed_temp"), 'dir="ltr" title="سرعة مؤقتة"'))}
-          ${f(2, "الوقت", inp("x_speed_time", v("speed_time")))}
-          ${f(2, "&nbsp;", `<select name="x_speed_type">${[["1", "دقائق"], ["2", "ساعات"], ["3", "الأيام"], ["4", "أشهر"]].map(([k, t]) => `<option value="${k}" ${ex.speed_type === k ? "selected" : ""}>${t}</option>`).join("")}</select>`)}
-          ${f(6, "الباقة", `<select name="ProfileID">${options(PROFILES, s.profile_id)}</select>`)}
-          ${f(3, "المدير", `<select name="ManagerID">${options(MANAGERS, s.manager_id, "username")}</select>`)}
-          ${f(3, "عنوان MAC", inp("Mac", esc(s.mac), 'dir="ltr"'))}
-          ${f(3, "عنوان IP", inp("FramedIP", esc(s.framed_ip), 'dir="ltr"'))}
-          ${f(3, "ايبي الجهاز المرسل", inp("x_ip_add2", v("ip_add2"), 'dir="ltr"'))}
-          ${f(3, "معرف الخدمة", inp("x_serv_name", v("serv_name")))}
-          ${f(4, "DNS الأساسي (PPP)", inp("x_dns1", v("dns1"), 'dir="ltr"'))}
-          ${f(4, "DNS الثانوي (PPP)", inp("x_dns2", v("dns2"), 'dir="ltr"'))}
-          ${f(4, "منفذ الاتصال للجهاز", inp("x_portid", v("portid")))}
+          ${f(4, "المدير", `<select name="ManagerID">${options(MANAGERS, s.manager_id, "username")}</select>`)}
+          ${f(4, "عنوان IP", inp("FramedIP", esc(s.framed_ip), 'dir="ltr"'))}
+          ${f(4, "عنوان MAC", inp("Mac", esc(s.mac), 'dir="ltr"'))}
+          ${f(4, "معرف الخدمة", inp("x_serv_name", v("serv_name")))}
+          ${f(4, "سرعة التحميل (Kbit/s)", inp("x_down_speed", v("down_speed"), 'dir="ltr"'))}
+          ${f(4, "سرعة الرفع (Kbit/s)", inp("x_up_speed", v("up_speed"), 'dir="ltr"'))}
+          ${f(3, "سرعة التحميل (مؤقتة)", inp("x_down_speed_temp", v("down_speed_temp"), 'dir="ltr" title="سرعة مؤقتة"'))}
+          ${f(3, "سرعة الرفع (مؤقتة)", inp("x_up_speed_temp", v("up_speed_temp"), 'dir="ltr" title="سرعة مؤقتة"'))}
+          ${f(3, "الوقت", inp("x_speed_time", v("speed_time")))}
+          ${f(3, "وحدة الوقت", `<select name="x_speed_type">${[["1", "دقائق"], ["2", "ساعات"], ["3", "الأيام"], ["4", "أشهر"]].map(([k, t]) => `<option value="${k}" ${ex.speed_type === k ? "selected" : ""}>${t}</option>`).join("")}</select>`)}
         </div>
+
         <h3 class="form-section">معلومات شخصية</h3>
         <div class="g12">
           ${f(6, "الاسم الأول", inp("Firstname", esc(s.firstname)))}
           ${f(6, "الاسم الأخير", inp("Lastname", esc(s.lastname)))}
-          ${f(6, "الإيميل", inp("x_email", v("email"), 'dir="ltr"'))}
-          ${f(3, "الهاتف", inp("Mobile", esc(s.mobile), 'dir="ltr"'))}
-          ${f(3, "InstaPay (مصر فقط)", inp("x_instapay", v("instapay"), 'dir="ltr"'))}
-          ${f(4, "الجنسية", inp("x_nationality", v("nationality")))}
-          ${f(4, "رقم الهوية", inp("x_national_num", v("national_num")))}
-          ${f(4, "طريقة السداد", inp("x_paid_by", v("paid_by")))}
-          ${f(6, "الدولة", inp("x_country", v("country") || "EG"))}
+          ${f(4, "الهاتف", inp("Mobile", esc(s.mobile), 'dir="ltr"'))}
+          ${f(4, "الإيميل", inp("x_email", v("email"), 'dir="ltr"'))}
+          ${f(4, "InstaPay (مصر فقط)", inp("x_instapay", v("instapay"), 'dir="ltr"'))}
+          ${f(12, "الدولة", inp("x_country", v("country") || "EG"))}
           ${f(6, "العنوان", `<textarea name="Address" rows="3">${esc(s.address)}</textarea>`)}
-          ${f(6, "ملاحظات", `<textarea name="Notes" rows="3">${esc(String(s.notes || "").replace(/\\n/g, "\n"))}</textarea>`)}
+          ${f(6, "ملاحظات", `<textarea name="Notes" rows="3">${esc(String(s.notes || "").replace(/\n/g, "
+"))}</textarea>`)}
         </div>
+
         <h3 class="form-section">خصائص متقدمة</h3>
         <div class="g12">
           ${f(6, "وقت الانتهاء", `<input name="Expiration" type="datetime-local" value="${esc(expVal)}">`)}
-          ${f(3, "إجمالي وقت الإتصال", inp("x_online_time", v("online_time")))}
-          ${f(3, "وقت الإتصال اليومي", inp("x_daily_online_time", v("daily_online_time")))}
+          ${f(6, "إجمالي وقت الإتصال", inp("x_online_time", v("online_time")))}
           ${f(6, "كمية التحميل المتاحة (MB)", inp("x_in_down", v("in_down")))}
           ${f(6, "كمية الرفع المتاحة (MB)", inp("x_in_up", v("in_up")))}
-          ${f(4, "من", inp("x_limit_from_time", v("limit_from_time"), 'type="time"'))}
-          ${f(4, "الى", inp("x_limit_to_time", v("limit_to_time"), 'type="time"'))}
+          ${f(6, "فترة السماح بالاتصال: من", inp("x_limit_from_time", v("limit_from_time"), 'type="time"'))}
+          ${f(6, "الى", inp("x_limit_to_time", v("limit_to_time"), 'type="time"'))}
           ${f(12, "او قم بتحديد كوتة كلية (MB)", `<div class="adv-inline">${inp("QuotaMB", esc(s.quota_mb), 'type="number" min="0"')}<button type="button" class="b-green" id="qGB" title="تحويل GB إلى MB">GB</button></div>
             <small class="muted">المستخدم منها: ${bytesTxt(s.used_mb)} — المتبقي: ${bytesTxt(s.quota_mb - s.used_mb)}</small>`)}
-          ${f(6, "اسم سلسلة التصفية في MikroTik", inp("x_mik_filter", v("mik_filter"), 'dir="ltr"'))}
-          ${f(6, "عدد الاجهزة", inp("Simul", esc(s.simul), 'type="number" min="1"'))}
-          ${f(6, "MikroTik Address List", inp("x_mik_addr", v("mik_addr"), 'dir="ltr"'))}
-          ${f(6, "MikroTik Framed Route", `<textarea name="x_mik_fra" rows="2" dir="ltr">${v("mik_fra")}</textarea>`)}
-          ${f(6, "مجموعة مستخدمي MikroTik (Winbox)", inp("x_mik_user", v("mik_user"), 'dir="ltr"'))}
-          <div class="fg s6"></div>
-          ${f(4, "انشى في", inp("created", advDate(s.created), "readonly"))}
+          ${f(4, "عدد الاجهزة المسموحة (Simultaneous)", inp("Simul", esc(s.simul), 'type="number" min="1"'))}
+          ${f(4, "MikroTik Address List", inp("x_mik_addr", v("mik_addr"), 'dir="ltr"'))}
+          ${f(4, "MikroTik Framed Route", `<textarea name="x_mik_fra" rows="1" dir="ltr">${v("mik_fra")}</textarea>`)}
+          ${f(4, "انشئ في", inp("created", advDate(s.created), "readonly"))}
           ${f(4, "انشئ بواسطة", inp("x_creationby", v("creationby") || (s.source === "adv" ? "ADV" : ""), "readonly"))}
           ${f(4, "رقم العقد", inp("x_num_doc", v("num_doc")))}
         </div>
-        <div class="form-actions"><button type="button" class="b-cancel" id="uCancel">إلغاء</button><button class="b-save">حفظ</button></div>
+        <div class="form-actions"><button type="button" class="b-cancel" id="uCancel">إلغاء</button><button class="b-save">حفظ المشترك</button></div>
       </form>
-      <div class="tab-prices hidden"><div id="prTbl"><div class="empty"><i class="fa fa-spinner fa-spin"></i></div></div><p class="muted">الأسعار بتتعدل من صفحة "اسعار العروض" (المدراء ← اسعار العروض).</p></div>
+      <div class="tab-prices hidden"><div id="prTbl"><div class="empty"><i class="bi bi-arrow-repeat bi-spin"></i></div></div><p class="muted">الأسعار بتتعدل من صفحة "اسعار العروض" (المدراء ← اسعار العروض).</p></div>
       <div class="tab-history hidden">
         <h3 class="form-section">الفواتير</h3><div class="tablewrap">${table(d.invoices, [["created", "التاريخ"], ["operation", "العملية"], ["amount", "المبلغ"], ["discount", "خصم"], ["paid", "مدفوع", x => +x ? "✔" : "✘"], ["period_to", "لحد"], ["created_by", "بواسطة"]])}</div>
         <h3 class="form-section">إعدادات الراديوس</h3><div class="tablewrap">${table(d.radius, [["t", "النوع"], ["attribute", "الخاصية"], ["op", ""], ["value", "القيمة"]])}</div>
